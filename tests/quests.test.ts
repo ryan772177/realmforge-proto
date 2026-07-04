@@ -3,6 +3,7 @@ import {
   initialQuestsState,
   applyGameEvent,
   claimQuest,
+  newlyEnteredCompletedOrClaimed,
 } from "../src/game/quests";
 import type { GameEvent } from "../src/game/events";
 
@@ -62,6 +63,28 @@ describe("quests: same event can cascade through a chain", () => {
     expect(s.status.Q2).toBe("completed");
     expect(s.status.Q3).toBe("completed");
     expect(s.status.Q4).toBe("active");
+  });
+
+  it("newlyEnteredCompletedOrClaimed catches a quest that cascades straight from locked to completed", () => {
+    // Regression: a diff that only checked `before === "active"` missed Q3
+    // here, since Q3's *before* status was "locked" (it only became "active"
+    // and immediately "completed" within this same fold) — found live via a
+    // real analytics export where quest_completed never fired for Q3.
+    let s = initialQuestsState();
+    const before = s.status;
+    s = applyGameEvent(s, placed("B01"));
+    s = applyGameEvent(s, placed("B02", { adjacentForestCount: 3, terrainMultiplier: 1.6 }));
+    const newlyCompleted = newlyEnteredCompletedOrClaimed(before, s.status);
+    expect(newlyCompleted).toEqual(expect.arrayContaining(["Q1", "Q2", "Q3"]));
+  });
+
+  it("does not re-flag a quest that was already completed/claimed before this diff", () => {
+    let s = initialQuestsState();
+    s = applyGameEvent(s, placed("B01"));
+    const afterQ1 = s.status;
+    s = applyGameEvent(s, placed("B02", { adjacentForestCount: 1 }));
+    const newlyCompleted = newlyEnteredCompletedOrClaimed(afterQ1, s.status);
+    expect(newlyCompleted).toEqual(["Q2"]);
   });
 });
 

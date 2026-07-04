@@ -135,6 +135,22 @@ export function applyGameEvent(state: QuestsState, event: GameEvent): QuestsStat
   return anyChanged ? { status } : state;
 }
 
+// For analytics: which quests newly entered completed/claimed between two
+// status snapshots. NOT just "was active" — the fixed-point loop above can
+// cascade a quest straight from "locked" to "completed" within one event
+// (Q2's completion unlocking Q3 in the same pass, which then also matches),
+// so anything that wasn't already completed/claimed counts as "newly" so.
+export function newlyEnteredCompletedOrClaimed(
+  before: Record<QuestId, QuestStatus>,
+  after: Record<QuestId, QuestStatus>
+): QuestId[] {
+  return Object.keys(after).filter((id) => {
+    const was = before[id];
+    const now = after[id];
+    return was !== "completed" && was !== "claimed" && (now === "completed" || now === "claimed");
+  });
+}
+
 export interface ClaimResult {
   state: QuestsState;
   reward: Partial<Record<ResourceId, number>> | null;

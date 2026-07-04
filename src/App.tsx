@@ -13,6 +13,7 @@ import type { GameEvent } from "./game/events";
 import { countAdjacentTerrain, hasNeighborBuildingWithinRange, getPlacedBuildingIds } from "./game/events";
 import {
   initialQuestsState, applyGameEvent as applyQuestEvent, claimQuest, allQuestDefs,
+  newlyEnteredCompletedOrClaimed,
 } from "./game/quests";
 import type { QuestsState, QuestId } from "./game/quests";
 import {
@@ -185,9 +186,7 @@ function foldEvents(
     }
   }
 
-  const newlyCompletedQuestIds = Object.keys(quests.status).filter(
-    (id) => prevQuestStatus[id] === "active" && (quests.status[id] === "completed" || quests.status[id] === "claimed")
-  );
+  const newlyCompletedQuestIds = newlyEnteredCompletedOrClaimed(prevQuestStatus, quests.status);
 
   return { quests, ftue, rival, newlyCompletedQuestIds, rivalJustRevealed };
 }
