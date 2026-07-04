@@ -1,0 +1,143 @@
+[
+  {
+    "event": "claim",
+    "payload": {
+      "resource": "wood",
+      "amount": 1524
+    },
+    "t": 2426
+  },
+  {
+    "event": "confusion_tap",
+    "payload": {
+      "screen": "grid_tap_no_claim"
+    },
+    "t": 2595
+  },
+  {
+    "event": "building_placed",
+    "payload": {
+      "building_id": "B01",
+      "tile": {
+        "row": 3,
+        "col": 2
+      },
+      "adjacency_summary": {
+        "terrainMultiplier": 1,
+        "adjacentForestCount": 0
+      },
+      "score_before": 342,
+      "score_after": 467
+    },
+    "t": 8177
+  },
+  {
+    "event": "building_placed",
+    "payload": {
+      "building_id": "B01",
+      "tile": {
+        "row": 0,
+        "col": 0
+      },
+      "adjacency_summary": {
+        "terrainMultiplier": 1,
+        "adjacentForestCount": 3
+      },
+      "score_before": 467,
+      "score_after": 593
+    },
+    "t": 10157
+  },
+  {
+    "event": "confusion_tap",
+    "payload": {
+      "screen": "grid_tap_no_claim"
+    },
+    "t": 10445
+  },
+  {
+    "event": "building_placed",
+    "payload": {
+      "building_id": "B01",
+      "tile": {
+        "row": 4,
+        "col": 3
+      },
+      "adjacency_summary": {
+        "terrainMultiplier": 1,
+        "adjacentForestCount": 2
+      },
+      "score_before": 593,
+      "score_after": 722
+    },
+    "t": 16144
+  },
+  {
+    "event": "building_placed",
+    "payload": {
+      "building_id": "B01",
+      "tile": {
+        "row": 3,
+        "col": 1
+      },
+      "adjacency_summary": {
+        "terrainMultiplier": 1,
+        "adjacentForestCount": 0
+      },
+      "score_before": 722,
+      "score_after": 848
+    },
+    "t": 25868
+  },
+  {
+    "event": "building_placed",
+    "payload": {
+      "building_id": "B01",
+      "tile": {
+        "row": 1,
+        "col": 3
+      },
+      "adjacency_summary": {
+        "terrainMultiplier": 1,
+        "adjacentForestCount": 0
+      },
+      "score_before": 848,
+      "score_after": 972
+    },
+    "t": 28030
+  },
+  {
+    "event": "building_placed",
+    "payload": {
+      "building_id": "B01",
+      "tile": {
+        "row": 0,
+        "col": 5
+      },
+      "adjacency_summary": {
+        "terrainMultiplier": 1,
+        "adjacentForestCount": 0
+      },
+      "score_before": 972,
+      "score_after": 1096
+    },
+    "t": 30740
+  },
+  {
+    "event": "building_placed",
+    "payload": {
+      "building_id": "B01",
+      "tile": {
+        "row": 5,
+        "col": 3
+      },
+      "adjacency_summary": {
+        "terrainMultiplier": 1,
+        "adjacentForestCount": 1
+      },
+      "score_before": 1096,
+      "score_after": 1216
+    },
+    "t": 37087
+  }
+]
