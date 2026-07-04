@@ -26,7 +26,7 @@ import {
   isQuestPanelVisible, isFreeRelocation, getStep,
 } from "./game/ftue";
 import type { FtueState } from "./game/ftue";
-import { loadGame, saveGame } from "./game/save";
+import { loadGame, saveGame, clearSave } from "./game/save";
 import { track, trackConfusionTap, downloadLogAsFile } from "./game/analytics";
 import { computeHintTarget } from "./game/hints";
 import RealmGrid from "./ui/RealmGrid";
@@ -290,6 +290,7 @@ export default function App() {
   const detailTileRef = useRef<{ row: number; col: number } | null>(null);
   const sessionStartRef = useRef<number>(Date.now());
   const wasRivalBeatenRef = useRef(false);
+  const isResettingRef = useRef(false);
 
   useEffect(() => { gameRef.current = game; }, [game]);
   useEffect(() => { detailTileRef.current = detailTile; }, [detailTile]);
@@ -361,10 +362,12 @@ export default function App() {
   // Autosave + session_end (task 11: "kill app mid-session, reopen -> identical realm").
   useEffect(() => {
     const id = setInterval(() => {
+      if (isResettingRef.current) return;
       saveGame(toSaveState(gameRef.current));
     }, AUTOSAVE_MS);
 
     function persistAndEndSession() {
+      if (isResettingRef.current) return;
       const g = gameRef.current;
       saveGame(toSaveState(g));
       track("session_end", {
@@ -726,6 +729,19 @@ export default function App() {
     setGame(g => ({ ...g, breakdownOpen: true }));
   }
 
+  function handleStartOver() {
+    if (!window.confirm("Start a new realm? This clears your current progress.")) return;
+    // Reloading triggers the pagehide autosave handler, which would otherwise
+    // re-save the (stale, pre-reset) state right after clearSave() removes
+    // it — same race as the between-session growth test found in Day 6.
+    isResettingRef.current = true;
+    clearSave();
+    // A full reload (rather than resetting React state in place) guarantees
+    // every ref/closure resets too, and hydrateGameState() naturally sees no
+    // save and starts fresh — same path a brand-new visitor takes.
+    window.location.reload();
+  }
+
   function handleRootPointerDown(e: React.PointerEvent<HTMLDivElement>) {
     // §23.1 confusion_tap: only counts taps that land on dead space (the root
     // background itself), not any interactive child — a deliberately minimal
@@ -886,22 +902,36 @@ export default function App() {
         </div>
       )}
 
-      <button
-        onClick={() => downloadLogAsFile()}
-        style={{
-          marginTop: 16,
-          alignSelf: "center",
-          background: "none",
-          border: "1px solid rgba(255,255,255,0.2)",
-          borderRadius: 6,
-          padding: "4px 10px",
-          fontSize: 10,
-          color: "rgba(255,255,255,0.4)",
-          cursor: "pointer",
-        }}
-      >
-        Export Analytics Log
-      </button>
+      <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 16 }}>
+        <button
+          onClick={() => downloadLogAsFile()}
+          style={{
+            background: "none",
+            border: "1px solid rgba(255,255,255,0.2)",
+            borderRadius: 6,
+            padding: "4px 10px",
+            fontSize: 10,
+            color: "rgba(255,255,255,0.4)",
+            cursor: "pointer",
+          }}
+        >
+          Export Analytics Log
+        </button>
+        <button
+          onClick={handleStartOver}
+          style={{
+            background: "none",
+            border: "1px solid rgba(255,255,255,0.2)",
+            borderRadius: 6,
+            padding: "4px 10px",
+            fontSize: 10,
+            color: "rgba(255,255,255,0.4)",
+            cursor: "pointer",
+          }}
+        >
+          Start Over
+        </button>
+      </div>
 
       {/* Drag ghost: positioned imperatively on every pointermove, no re-render */}
       <div
