@@ -430,12 +430,23 @@ export default function App() {
 
   // FTUE step transitions -> ftue_step_done analytics event.
   const prevFtueStepRef = useRef(game.ftue.stepIndex);
+  const prevFtueActiveRef = useRef(game.ftue.active);
   useEffect(() => {
+    const t_ms = Date.now() - sessionStartRef.current;
     if (game.ftue.stepIndex !== prevFtueStepRef.current) {
-      track("ftue_step_done", { step_id: prevFtueStepRef.current, t_ms: Date.now() - sessionStartRef.current });
+      track("ftue_step_done", { step_id: prevFtueStepRef.current, t_ms });
       prevFtueStepRef.current = game.ftue.stepIndex;
     }
-  }, [game.ftue.stepIndex]);
+    // The final transition (step 12 completing -> freeplay) keeps stepIndex
+    // at 12 and only flips `active` false, so the check above alone never
+    // fires for it — found via a real analytics export missing step 12
+    // entirely. ftue.json names this step's own event "freeplay_start".
+    if (prevFtueActiveRef.current && !game.ftue.active) {
+      track("ftue_step_done", { step_id: game.ftue.stepIndex, t_ms });
+      track("freeplay_start", { t_ms });
+    }
+    prevFtueActiveRef.current = game.ftue.active;
+  }, [game.ftue.stepIndex, game.ftue.active]);
 
   // §10 step 3: "bonus_viewed" fires after dwelling on a valid adjacency
   // report for >=1.5s while dragging.
