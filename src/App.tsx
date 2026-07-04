@@ -27,6 +27,7 @@ import {
 import type { FtueState } from "./game/ftue";
 import { loadGame, saveGame } from "./game/save";
 import { track, trackConfusionTap, downloadLogAsFile } from "./game/analytics";
+import { computeHintTarget } from "./game/hints";
 import RealmGrid from "./ui/RealmGrid";
 import BuildingTray from "./ui/BuildingTray";
 import AdjacencyReport from "./ui/AdjacencyReport";
@@ -275,15 +276,18 @@ export default function App() {
   const [game, setGame] = useState<GameState>(initialHydration.game);
   const [dragUI, setDragUI] = useState<DragUI | null>(null);
   const [rejectionText, setRejectionText] = useState<string | null>(null);
+  const [detailTile, setDetailTile] = useState<{ row: number; col: number } | null>(null);
 
   const dragRef = useRef<DragOp | null>(null);
   const ghostRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<GameState>(game);
+  const detailTileRef = useRef<{ row: number; col: number } | null>(null);
   const sessionStartRef = useRef<number>(Date.now());
   const wasRivalBeatenRef = useRef(false);
 
   useEffect(() => { gameRef.current = game; }, [game]);
+  useEffect(() => { detailTileRef.current = detailTile; }, [detailTile]);
 
   useEffect(() => {
     if (initialHydration.isNewGame) track("ftue_start");
@@ -325,6 +329,11 @@ export default function App() {
     }
     return ids;
   }, [game.ftue]);
+
+  const hintTarget = useMemo(() => {
+    if (!game.ftue.active || !game.ftue.fallbackShown) return null;
+    return computeHintTarget(getStep(game.ftue.stepIndex).fallback.hint, game.board);
+  }, [game.ftue.active, game.ftue.fallbackShown, game.ftue.stepIndex, game.board]);
 
   useEffect(() => {
     let last = performance.now();
@@ -467,6 +476,10 @@ export default function App() {
     updateGhost(e.clientX, e.clientY, BUILDING_SHORT[buildingId] ?? buildingId);
     setDragUI({ buildingId, hoverRow: null, hoverCol: null, hoverValid: false, hoverText: null });
     setRejectionText(null);
+    // Note: detailTile is deliberately NOT cleared here — a plain tap (no
+    // movement) needs handlePointerUp to still see the prior detailTile to
+    // decide whether this tap is opening or closing it. It's cleared instead
+    // the moment a real drag starts (see handlePointerMove).
   }
 
   function handlePointerMove(e: React.PointerEvent) {
@@ -480,6 +493,7 @@ export default function App() {
     const dy = e.clientY - drag.startY;
     if (!drag.hasMoved && Math.hypot(dx, dy) >= TAP_THRESHOLD) {
       drag.hasMoved = true;
+      setDetailTile(null);
     }
     if (!drag.hasMoved) return;
 
@@ -552,7 +566,14 @@ export default function App() {
             resources, pendingAccrual: pending, totalWoodClaimed,
           }));
         } else {
-          trackConfusionTap("grid_tap_no_claim");
+          // No claim waiting — tapping a placed building opens its detail
+          // panel instead (§21.2 task 5: same AdjacencyReport component, a
+          // detail context). Tapping the same building again closes it.
+          const { fromRow, fromCol } = drag.source;
+          const current = detailTileRef.current;
+          const opening = !(current && current.row === fromRow && current.col === fromCol);
+          if (opening) track("report_viewed", { context: "detail", dwell_ms: 0 });
+          setDetailTile(opening ? { row: fromRow, col: fromCol } : null);
         }
       }
       return;
@@ -685,6 +706,7 @@ export default function App() {
     // interpretation of "non-interactive UI" for this greybox pass.
     if (e.target === e.currentTarget) {
       trackConfusionTap("app_background");
+      setDetailTile(null);
     }
   }
 
@@ -704,7 +726,12 @@ export default function App() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, padding: "0 4px" }}>
         <span style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>Realmforge Rivals</span>
         {isScoreVisible(game.ftue) && (
-          <ScoreBreakdown report={currentReport} open={game.breakdownOpen} onToggle={handleToggleBreakdown} />
+          <ScoreBreakdown
+            report={currentReport}
+            open={game.breakdownOpen}
+            onToggle={handleToggleBreakdown}
+            pulse={hintTarget?.pulseScore}
+          />
         )}
       </div>
 
@@ -714,10 +741,11 @@ export default function App() {
           playerScore={currentReport.prosperity}
           onImproveMyScore={handleImproveMyScore}
           onViewedOrOpened={handleRivalViewedOrOpened}
+          pulse={hintTarget?.pulseRivalCard}
         />
       )}
 
-      <FtueDirector ftue={game.ftue} />
+      <FtueDirector ftue={game.ftue} rival={game.rival} playerScore={currentReport.prosperity} />
 
       {isResourceBarVisible(game.ftue) && (
         <div style={{ display: "flex", gap: 10, marginBottom: 10, padding: "0 4px", fontSize: 12, color: "rgba(255,255,255,0.7)" }}>
@@ -748,6 +776,8 @@ export default function App() {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerCancel}
+        highlightTiles={hintTarget?.tiles}
+        bounceClaimBadges={hintTarget?.bounceClaimBadges}
       />
 
       {dragUI && dragUI.hoverRow != null && dragUI.hoverCol != null && (
@@ -778,8 +808,38 @@ export default function App() {
         />
       )}
 
+      {!dragUI && detailTile && (() => {
+        const building = game.board.tiles[detailTile.row]?.[detailTile.col]?.building;
+        if (!building) return null;
+        const breakdowns = [
+          currentReport.productionBreakdown,
+          currentReport.manaBreakdown,
+          currentReport.happinessBreakdown,
+          currentReport.beautyBreakdown,
+          currentReport.populationBreakdown,
+        ];
+        const causeLines = causeLinesForTile(breakdowns, detailTile.row, detailTile.col);
+        const contribution = breakdowns
+          .flat()
+          .filter((l) => l.row === detailTile.row && l.col === detailTile.col)
+          .reduce((sum, l) => sum + l.contribution, 0);
+        return (
+          <AdjacencyReport
+            mode="detail"
+            buildingName={BUILDING_NAME[building] ?? building}
+            causeLines={causeLines}
+            contribution={contribution}
+          />
+        );
+      })()}
+
       {isQuestPanelVisible(game.ftue) && (
-        <QuestPanel quests={allQuestDefs()} status={game.quests.status} onClaim={handleClaimQuest} />
+        <QuestPanel
+          quests={allQuestDefs()}
+          status={game.quests.status}
+          onClaim={handleClaimQuest}
+          pulse={hintTarget?.pulseQuestPanel}
+        />
       )}
 
       <BuildingTray
@@ -791,6 +851,7 @@ export default function App() {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerCancel}
+        highlightBuildingId={hintTarget?.highlightBuildingId}
       />
 
       {isFreeRelocation(game.ftue) && (

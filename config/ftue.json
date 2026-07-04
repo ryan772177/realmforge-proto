@@ -127,7 +127,7 @@
       "time": "3:30",
       "uiElement": "Rival card slides in",
       "playerAction": "View rival comparison",
-      "microcopy": "Rival realm Thornwick: 340. Beat them.",
+      "microcopy": "Rival realm {name}: {rivalScore}. Beat them.",
       "systemTaught": "competition",
       "analyticsEvent": "rival_viewed",
       "successCondition": "Card opened or dwell ≥2s",

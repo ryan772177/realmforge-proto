@@ -28,13 +28,17 @@ interface Props {
   onPointerMove: (e: React.PointerEvent) => void;
   onPointerUp: (e: React.PointerEvent) => void;
   onPointerCancel: (e: React.PointerEvent) => void;
+  highlightTiles?: { row: number; col: number }[];
+  bounceClaimBadges?: boolean;
 }
 
 export default function RealmGrid({
   board, dragUI, pendingAccrual, gridRef,
   onTilePointerDown, onPointerMove, onPointerUp, onPointerCancel,
+  highlightTiles, bounceClaimBadges,
 }: Props) {
   const gridSize = TILE * 6 + GAP * 5;
+  const highlighted = new Set((highlightTiles ?? []).map((t) => `${t.row},${t.col}`));
 
   return (
     <div
@@ -60,10 +64,12 @@ export default function RealmGrid({
           const borderColor = isHover
             ? (dragUI!.hoverValid ? "#00ff88" : "#ff4444")
             : "transparent";
+          const isHinted = highlighted.has(key);
 
           return (
             <div
               key={key}
+              className={isHinted ? "rf-pulse" : undefined}
               onPointerDown={(e) => onTilePointerDown(e, tile.row, tile.col)}
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}
@@ -94,17 +100,20 @@ export default function RealmGrid({
                 </span>
               )}
               {hasClaim && (
-                <div style={{
-                  position: "absolute",
-                  top: 2, right: 2,
-                  width: 14, height: 14,
-                  background: "#ffd700",
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 10, fontWeight: 700, color: "#000",
-                }}>
+                <div
+                  className={bounceClaimBadges ? "rf-bounce" : undefined}
+                  style={{
+                    position: "absolute",
+                    top: 2, right: 2,
+                    width: 14, height: 14,
+                    background: "#ffd700",
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 10, fontWeight: 700, color: "#000",
+                  }}
+                >
                   +
                 </div>
               )}

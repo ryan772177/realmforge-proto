@@ -24,10 +24,12 @@ interface Props {
   onPointerMove: (e: React.PointerEvent) => void;
   onPointerUp: (e: React.PointerEvent) => void;
   onPointerCancel: (e: React.PointerEvent) => void;
+  highlightBuildingId?: BuildingId | null;
 }
 
 export default function BuildingTray({
   resources, unlockedIds, onBuildingPointerDown, onPointerMove, onPointerUp, onPointerCancel,
+  highlightBuildingId,
 }: Props) {
   return (
     <div style={{ marginTop: 12 }}>
@@ -41,6 +43,7 @@ export default function BuildingTray({
           return (
             <div
               key={id}
+              className={highlightBuildingId === id ? "rf-pulse" : undefined}
               onPointerDown={(e) => { if (canAfford) onBuildingPointerDown(e, id); }}
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}

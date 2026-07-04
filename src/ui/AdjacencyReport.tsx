@@ -3,16 +3,22 @@ import type { CauseLine } from "../scoring/types";
 
 interface Props {
   buildingName: string;
+  // "preview" (default): live drag placement, shows a before -> after delta.
+  // "detail" (§21.2 task 5): tapping an already-placed building — same
+  // component, same causeLines source, but there's no "after" to show, just
+  // what this building is contributing right now.
+  mode?: "preview" | "detail";
   rejectionText?: string | null;
   causeLines?: CauseLine[];
   prosperityBefore?: number;
   prosperityAfter?: number;
+  contribution?: number;
 }
 
 // §18: one component, reads ScoreReport-derived data only — no arithmetic on
 // score values happens here, only display formatting.
 export default function AdjacencyReport({
-  buildingName, rejectionText, causeLines, prosperityBefore, prosperityAfter,
+  buildingName, mode = "preview", rejectionText, causeLines, prosperityBefore, prosperityAfter, contribution,
 }: Props) {
   if (rejectionText) {
     return (
@@ -25,9 +31,6 @@ export default function AdjacencyReport({
 
   const lines = causeLines ?? [];
   const visible = lines.slice(0, 4);
-  const before = prosperityBefore ?? 0;
-  const after = prosperityAfter ?? before;
-  const delta = after - before;
 
   return (
     <div style={panelStyle}>
@@ -35,7 +38,7 @@ export default function AdjacencyReport({
 
       {visible.length === 0 ? (
         <div style={{ opacity: 0.6, fontStyle: "italic", marginBottom: 4 }}>
-          No bonuses here. Try near a Forest.
+          {mode === "detail" ? "No bonuses or penalties right now." : "No bonuses here. Try near a Forest."}
         </div>
       ) : (
         visible.map((line, i) => (
@@ -45,17 +48,38 @@ export default function AdjacencyReport({
         ))
       )}
 
-      <div
-        style={{
-          marginTop: 6,
-          paddingTop: 6,
-          borderTop: "1px solid rgba(255,255,255,0.12)",
-          fontWeight: 700,
-          color: delta >= 0 ? "#ffd700" : "#ff6b6b",
-        }}
-      >
-        Prosperity {delta >= 0 ? "+" : ""}{delta} ({before} → {after})
-      </div>
+      {mode === "detail" ? (
+        <div
+          style={{
+            marginTop: 6,
+            paddingTop: 6,
+            borderTop: "1px solid rgba(255,255,255,0.12)",
+            fontWeight: 700,
+            color: "#ffd700",
+          }}
+        >
+          Contributing {(contribution ?? 0) >= 0 ? "+" : ""}{Math.round(contribution ?? 0)} to Prosperity
+        </div>
+      ) : (
+        <ProsperityDelta before={prosperityBefore ?? 0} after={prosperityAfter ?? (prosperityBefore ?? 0)} />
+      )}
+    </div>
+  );
+}
+
+function ProsperityDelta({ before, after }: { before: number; after: number }) {
+  const delta = after - before;
+  return (
+    <div
+      style={{
+        marginTop: 6,
+        paddingTop: 6,
+        borderTop: "1px solid rgba(255,255,255,0.12)",
+        fontWeight: 700,
+        color: delta >= 0 ? "#ffd700" : "#ff6b6b",
+      }}
+    >
+      Prosperity {delta >= 0 ? "+" : ""}{delta} ({before} → {after})
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import type { FtueState } from "../game/ftue";
 import { getStep } from "../game/ftue";
+import type { RivalState } from "../game/rival";
 
 // A simple hint sentence per fallback key — the doc's fallback hints
 // ("tile_shimmer", "ghost_arrow_to_3forest_tile", ...) describe bespoke
@@ -22,11 +23,25 @@ const HINT_TEXT: Record<string, string> = {
 
 interface Props {
   ftue: FtueState;
+  // Only step 11's microcopy currently uses {name}/{rivalScore} placeholders
+  // (the doc's locked copy names a fixed example rival — "Thornwick: 340" —
+  // that won't match the actual seeded rival; these let it stay accurate).
+  rival?: RivalState | null;
+  playerScore?: number;
 }
 
-export default function FtueDirector({ ftue }: Props) {
+function interpolate(text: string, rival: RivalState | null | undefined, playerScore: number | undefined): string {
+  if (!text.includes("{")) return text;
+  return text
+    .replace("{name}", rival?.name ?? "your rival")
+    .replace("{rivalScore}", rival ? String(rival.score) : "?")
+    .replace("{playerScore}", playerScore !== undefined ? String(playerScore) : "?");
+}
+
+export default function FtueDirector({ ftue, rival, playerScore }: Props) {
   if (!ftue.active) return null;
   const step = getStep(ftue.stepIndex);
+  const microcopy = interpolate(step.microcopy, rival, playerScore);
 
   return (
     <div
@@ -39,7 +54,7 @@ export default function FtueDirector({ ftue }: Props) {
         borderRadius: 8,
       }}
     >
-      <div style={{ fontSize: 13, fontWeight: 600, color: "#ffe680" }}>{step.microcopy}</div>
+      <div style={{ fontSize: 13, fontWeight: 600, color: "#ffe680" }}>{microcopy}</div>
       {ftue.fallbackShown && (
         <div style={{ fontSize: 11, color: "rgba(255,230,128,0.7)", marginTop: 3 }}>
           {HINT_TEXT[step.fallback.hint] ?? step.playerAction}

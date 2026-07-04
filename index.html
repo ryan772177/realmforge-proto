@@ -10,6 +10,19 @@
       html, body { height: 100%; background: #12121f; color: #f0f0f0; font-family: system-ui, -apple-system, sans-serif; }
       body { touch-action: manipulation; -webkit-tap-highlight-color: transparent; overscroll-behavior: none; }
       #root { height: 100%; }
+
+      /* FTUE fallback hints (§10 fallback column) — real visual nudges, not
+         just text: a glow pulse for "look here" and a bounce for "tap this". */
+      @keyframes rf-pulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(255,215,0,0.7); }
+        50% { box-shadow: 0 0 0 7px rgba(255,215,0,0); }
+      }
+      @keyframes rf-bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+      }
+      .rf-pulse { animation: rf-pulse 1.3s ease-in-out infinite; }
+      .rf-bounce { animation: rf-bounce 0.6s ease-in-out infinite; }
     </style>
   </head>
   <body>

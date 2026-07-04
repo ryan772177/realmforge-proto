@@ -7,11 +7,12 @@ interface Props {
   playerScore: number;
   onImproveMyScore: () => void;
   onViewedOrOpened: () => void;
+  pulse?: boolean;
 }
 
 // §19.2: compact chip (name + delta) collapsed; tap expands to the full card
 // with banner, both scores, a delta bar, and "Improve My Score".
-export default function RivalCard({ rival, playerScore, onImproveMyScore, onViewedOrOpened }: Props) {
+export default function RivalCard({ rival, playerScore, onImproveMyScore, onViewedOrOpened, pulse }: Props) {
   const [open, setOpen] = useState(false);
   const firedRef = useRef(false);
 
@@ -41,6 +42,7 @@ export default function RivalCard({ rival, playerScore, onImproveMyScore, onView
     return (
       <button
         onClick={handleOpen}
+        className={pulse ? "rf-pulse" : undefined}
         style={{
           position: "absolute",
           top: 12,

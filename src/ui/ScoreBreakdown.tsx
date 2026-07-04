@@ -4,6 +4,7 @@ interface Props {
   report: ScoreReport;
   open: boolean;
   onToggle: () => void;
+  pulse?: boolean;
 }
 
 // §16.3 format. Reads ScoreReport only — every number here is already
@@ -13,9 +14,9 @@ function summarize(lines: { buildingName: string; contribution: number }[]): str
   return " (" + lines.map((l) => `${l.buildingName} ${Math.round(l.contribution)}`).join(" · ") + ")";
 }
 
-export default function ScoreBreakdown({ report, open, onToggle }: Props) {
+export default function ScoreBreakdown({ report, open, onToggle, pulse }: Props) {
   return (
-    <div style={{ marginBottom: 8 }}>
+    <div style={{ marginBottom: 8 }} className={pulse ? "rf-pulse" : undefined}>
       <button
         onClick={onToggle}
         style={{

@@ -4,6 +4,7 @@ interface Props {
   quests: QuestDef[];
   status: Record<QuestId, QuestStatus>;
   onClaim: (id: QuestId) => void;
+  pulse?: boolean;
 }
 
 function rewardText(reward: QuestDef["reward"]): string {
@@ -14,12 +15,13 @@ function rewardText(reward: QuestDef["reward"]): string {
   return isChest ? `${gold} Gold chest` : `${gold} Gold`;
 }
 
-export default function QuestPanel({ quests, status, onClaim }: Props) {
+export default function QuestPanel({ quests, status, onClaim, pulse }: Props) {
   const visible = quests.filter((q) => status[q.id] !== "locked");
   if (visible.length === 0) return null;
 
   return (
     <div
+      className={pulse ? "rf-pulse" : undefined}
       style={{
         background: "rgba(20,20,20,0.9)",
         border: "1px solid rgba(255,255,255,0.15)",

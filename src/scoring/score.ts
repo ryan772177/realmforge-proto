@@ -29,6 +29,13 @@ const TERRAIN_NAMES = Object.fromEntries(
   Object.values(terrainJson.terrainTypes).map((t) => [t.id, t.name])
 ) as Record<TerrainId, string>;
 
+// §18.2 cause-text format: "+20% Wood from Forest ×2" — names the resource
+// the building actually produces, not just the bare percentage.
+function primaryResourceName(config: BuildingConfig): string {
+  const key = Object.keys(config.baseOutput ?? {})[0];
+  return key ? key.charAt(0).toUpperCase() + key.slice(1) : "";
+}
+
 interface Placement {
   tile: Tile;
   config: BuildingConfig;
@@ -173,8 +180,9 @@ export function computeScore(board: BoardState): ScoreReport {
       if (terrain) {
         const cappedCount = Math.min(terrain.count, terrain.cap);
         const isCapped = terrain.count >= terrain.cap;
+        const resourceName = primaryResourceName(config);
         causeLines.unshift({
-          text: `+${Math.round(terrain.rate * 100)}% from ${TERRAIN_NAMES[terrain.terrain]} ×${cappedCount}${capSuffix(isCapped)}`,
+          text: `+${Math.round(terrain.rate * 100)}%${resourceName ? ` ${resourceName}` : ""} from ${TERRAIN_NAMES[terrain.terrain]} ×${cappedCount}${capSuffix(isCapped)}`,
           delta: terrain.rate * cappedCount,
           isConflict: false,
           isCapped,
@@ -236,8 +244,9 @@ export function computeScore(board: BoardState): ScoreReport {
       if (terrain) {
         const cappedCount = Math.min(terrain.count, terrain.cap);
         const isCapped = terrain.count >= terrain.cap;
+        const resourceName = primaryResourceName(config);
         causeLines.unshift({
-          text: `+${Math.round(terrain.rate * 100)}% from ${TERRAIN_NAMES[terrain.terrain]} ×${cappedCount}${capSuffix(isCapped)}`,
+          text: `+${Math.round(terrain.rate * 100)}%${resourceName ? ` ${resourceName}` : ""} from ${TERRAIN_NAMES[terrain.terrain]} ×${cappedCount}${capSuffix(isCapped)}`,
           delta: terrain.rate * cappedCount,
           isConflict: false,
           isCapped,
