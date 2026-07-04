@@ -1,0 +1,14 @@
+[
+  { "event": "ftue_start", "payload": {}, "t": 0 },
+  { "event": "building_placed", "payload": { "building_id": "B01", "tile": { "row": 2, "col": 2 }, "score_before": 0, "score_after": 100 }, "t": 45000 },
+  { "event": "ftue_step_done", "payload": { "step_id": 1, "t_ms": 45000 }, "t": 45010 },
+  { "event": "quest_completed", "payload": { "quest_id": "Q1", "t_ms": 45000 }, "t": 45020 },
+  { "event": "confusion_tap", "payload": { "screen": "app_background" }, "t": 50000 },
+  { "event": "confusion_tap", "payload": { "screen": "app_background" }, "t": 52000 },
+  { "event": "confusion_tap", "payload": { "screen": "app_background" }, "t": 55000 },
+  { "event": "confusion_cluster", "payload": { "screen": "app_background", "count": 3 }, "t": 55010 },
+  { "event": "building_placed", "payload": { "building_id": "B02", "tile": { "row": 5, "col": 5 }, "score_before": 100, "score_after": 148 }, "t": 90000 },
+  { "event": "ftue_step_done", "payload": { "step_id": 2, "t_ms": 90000 }, "t": 90010 },
+  { "event": "quest_completed", "payload": { "quest_id": "Q2", "t_ms": 90000 }, "t": 90020 },
+  { "event": "session_end", "payload": { "duration_ms": 150000, "buildings": 2, "relocations": 0, "final_score": 148 }, "t": 150000 }
+]

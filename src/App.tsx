@@ -102,18 +102,29 @@ function isPlayerAction(event: GameEvent): boolean {
   return event.type === "building_placed" || event.type === "building_relocated" || event.type === "claim";
 }
 
+interface FoldResult {
+  quests: QuestsState;
+  ftue: FtueState;
+  rival: RivalState | null;
+  newlyCompletedQuestIds: QuestId[];
+  rivalJustRevealed: boolean;
+}
+
 // Folds one or more GameEvents through quests + FTUE, revealing the rival the
 // moment FTUE crosses into step 11 (matching §10 step 11's "Rival card
 // slides in") and growing the rival on every player action once revealed.
-// Pure — no analytics/side effects here; callers track() before invoking this.
+// Pure — no analytics/side effects here; callers track() the returned
+// newlyCompletedQuestIds/rivalJustRevealed themselves before calling setGame.
 function foldEvents(
   g: Pick<GameState, "quests" | "ftue" | "rival" | "seed">,
   events: GameEvent[],
   prosperity: number
-): Pick<GameState, "quests" | "ftue" | "rival"> {
+): FoldResult {
+  const prevQuestStatus = g.quests.status;
   let quests = g.quests;
   let ftue = g.ftue;
   let rival = g.rival;
+  let rivalJustRevealed = false;
   const queue = [...events];
 
   for (let i = 0; i < queue.length; i++) {
@@ -126,6 +137,7 @@ function foldEvents(
 
     if (prevActive && ftue.active && prevStep === 10 && ftue.stepIndex === 11 && !rival) {
       rival = revealRival(g.seed, prosperity);
+      rivalJustRevealed = true;
       queue.push({ type: "rival_revealed" });
     }
 
@@ -134,7 +146,11 @@ function foldEvents(
     }
   }
 
-  return { quests, ftue, rival };
+  const newlyCompletedQuestIds = Object.keys(quests.status).filter(
+    (id) => prevQuestStatus[id] === "active" && (quests.status[id] === "completed" || quests.status[id] === "claimed")
+  );
+
+  return { quests, ftue, rival, newlyCompletedQuestIds, rivalJustRevealed };
 }
 
 function freshGameState(): GameState {
@@ -236,6 +252,18 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Fires the two analytics events that are *derived* from a fold outcome
+  // rather than known up front by the caller (unlike building_placed etc.,
+  // which the caller already knows is happening).
+  function trackFoldOutcome(next: FoldResult, prosperity: number) {
+    for (const questId of next.newlyCompletedQuestIds) {
+      track("quest_completed", { quest_id: questId, t_ms: Date.now() - sessionStartRef.current });
+    }
+    if (next.rivalJustRevealed && next.rival) {
+      track("rival_revealed", { player_score: prosperity, rival_score: next.rival.score });
+    }
+  }
+
   const currentReport = useMemo(() => computeScore(game.board), [game.board]);
   const currentReportRef = useRef<ScoreReport>(currentReport);
   useEffect(() => { currentReportRef.current = currentReport; }, [currentReport]);
@@ -318,8 +346,9 @@ export default function App() {
       beatsRival: rivalBeatenNow,
     };
     const next = foldEvents(g, [event], currentReport.prosperity);
+    trackFoldOutcome(next, currentReport.prosperity);
     setGame(g2 => ({
-      ...g2, ...next,
+      ...g2, quests: next.quests, ftue: next.ftue, rival: next.rival,
       rivalBeatenPendingComeback: g2.rivalBeatenPendingComeback || rivalBeatenNow,
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -351,7 +380,11 @@ export default function App() {
     if (!dragUI || dragUI.hoverRow == null || !dragUI.hoverValid) return;
     const id = setTimeout(() => {
       track("report_viewed", { context: "preview", dwell_ms: 1500 });
-      setGame(g => ({ ...g, ...foldEvents(g, [{ type: "bonus_dwell" }], currentReportRef.current.prosperity) }));
+      const g = gameRef.current;
+      const prosperity = currentReportRef.current.prosperity;
+      const next = foldEvents(g, [{ type: "bonus_dwell" }], prosperity);
+      trackFoldOutcome(next, prosperity);
+      setGame(g2 => ({ ...g2, quests: next.quests, ftue: next.ftue, rival: next.rival }));
     }, 1500);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -475,7 +508,11 @@ export default function App() {
           const totalWoodClaimed = g.totalWoodClaimed + woodClaimed;
           const event: GameEvent = { type: "claim", resource: "wood", cumulativeAmount: totalWoodClaimed };
           const next = foldEvents(g, [event], currentReport.prosperity);
-          setGame(g2 => ({ ...g2, ...next, resources, pendingAccrual: pending, totalWoodClaimed }));
+          trackFoldOutcome(next, currentReport.prosperity);
+          setGame(g2 => ({
+            ...g2, quests: next.quests, ftue: next.ftue, rival: next.rival,
+            resources, pendingAccrual: pending, totalWoodClaimed,
+          }));
         } else {
           trackConfusionTap("grid_tap_no_claim");
         }
@@ -515,8 +552,9 @@ export default function App() {
         score_after: report.prosperity,
       });
       const next = foldEvents(g, [event], report.prosperity);
+      trackFoldOutcome(next, report.prosperity);
       setGame(g2 => ({
-        ...g2, ...next,
+        ...g2, quests: next.quests, ftue: next.ftue, rival: next.rival,
         board: newBoard,
         resources: newRes,
       }));
@@ -551,8 +589,9 @@ export default function App() {
         ftue: g.ftue.active,
       });
       const next = foldEvents(g, [event], report.prosperity);
+      trackFoldOutcome(next, report.prosperity);
       setGame(g2 => ({
-        ...g2, ...next,
+        ...g2, quests: next.quests, ftue: next.ftue, rival: next.rival,
         board: newBoard,
         resources: newRes,
         relocationCount: g2.relocationCount + 1,
@@ -574,7 +613,8 @@ export default function App() {
     if (!opening) { setGame(g2 => ({ ...g2, breakdownOpen: false })); return; }
     track("breakdown_opened", { score: currentReport.prosperity, dwell_ms: 0 });
     const next = foldEvents(g, [{ type: "breakdown_opened" }], currentReport.prosperity);
-    setGame(g2 => ({ ...g2, ...next, breakdownOpen: true }));
+    trackFoldOutcome(next, currentReport.prosperity);
+    setGame(g2 => ({ ...g2, quests: next.quests, ftue: next.ftue, rival: next.rival, breakdownOpen: true }));
   }
 
   function handleClaimQuest(questId: QuestId) {
@@ -584,14 +624,16 @@ export default function App() {
     track("reward_claimed", { quest_id: questId, t_ms: Date.now() - sessionStartRef.current });
     const resources = reward?.gold ? { ...g.resources, gold: g.resources.gold + reward.gold } : g.resources;
     const next = foldEvents({ ...g, quests }, [{ type: "reward_claimed", questId }], currentReport.prosperity);
-    setGame(g2 => ({ ...g2, ...next, resources }));
+    trackFoldOutcome(next, currentReport.prosperity);
+    setGame(g2 => ({ ...g2, quests: next.quests, ftue: next.ftue, rival: next.rival, resources }));
   }
 
   function handleRivalViewedOrOpened() {
     track("rival_card_opened", { player_score: currentReport.prosperity, rival_score: gameRef.current.rival?.score ?? null });
     const g = gameRef.current;
     const next = foldEvents(g, [{ type: "rival_dwell_or_open" }], currentReport.prosperity);
-    setGame(g2 => ({ ...g2, ...next }));
+    trackFoldOutcome(next, currentReport.prosperity);
+    setGame(g2 => ({ ...g2, quests: next.quests, ftue: next.ftue, rival: next.rival }));
   }
 
   function handleImproveMyScore() {

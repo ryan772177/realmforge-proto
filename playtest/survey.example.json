@@ -1,0 +1,4 @@
+[
+  { "tester_id": "example-tester-01", "score_comprehension": true, "would_play_tomorrow": true },
+  { "tester_id": "example-tester-02", "score_comprehension": false, "would_play_tomorrow": false }
+]
