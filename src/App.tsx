@@ -98,6 +98,44 @@ function causeLinesForTile(
     .flatMap((line) => line.causeLines);
 }
 
+// §15: "every conflict appears in the adjacency report during preview, before
+// commit — the player is warned, never ambushed." The dragged building's own
+// breakdown entry only carries bonuses/penalties it *receives* (e.g. a Sawmill
+// synergy it's given) — a conflict it *inflicts* on a neighbor (Forge hurting
+// a nearby Cottage) lives in that neighbor's own breakdown entry instead, so
+// it's invisible while hovering the source tile. Diff the pre- and post-drag
+// reports' conflict-bearing categories (happiness/beauty) per target tile to
+// surface anything newly caused by this placement.
+function collateralConflictLines(
+  before: ScoreReport,
+  after: ScoreReport,
+  excludeRow: number,
+  excludeCol: number
+): CauseLine[] {
+  const relevant = (r: ScoreReport) =>
+    [...r.happinessBreakdown, ...r.beautyBreakdown].filter(
+      (l) => !(l.row === excludeRow && l.col === excludeCol)
+    );
+  const beforeByTile = new Map(relevant(before).map((l) => [`${l.row},${l.col}`, l]));
+
+  const collateral: CauseLine[] = [];
+  for (const line of relevant(after)) {
+    const beforeLine = beforeByTile.get(`${line.row},${line.col}`);
+    const beforeConflicts = new Map(
+      (beforeLine?.causeLines ?? []).filter((c) => c.isConflict).map((c) => [c.text, c.delta])
+    );
+    for (const cause of line.causeLines) {
+      if (!cause.isConflict) continue;
+      const priorDelta = beforeConflicts.get(cause.text);
+      // New conflict, or an existing one that got worse (more sources in range).
+      if (priorDelta === undefined || Math.abs(cause.delta) > Math.abs(priorDelta)) {
+        collateral.push(cause);
+      }
+    }
+  }
+  return collateral;
+}
+
 function isPlayerAction(event: GameEvent): boolean {
   return event.type === "building_placed" || event.type === "building_relocated" || event.type === "claim";
 }
@@ -718,16 +756,21 @@ export default function App() {
           rejectionText={!dragUI.hoverValid ? (dragUI.hoverText ?? "Can't place here.") : null}
           causeLines={
             dragUI.hoverValid && previewReport
-              ? causeLinesForTile(
-                  [
-                    previewReport.productionBreakdown,
-                    previewReport.manaBreakdown,
-                    previewReport.happinessBreakdown,
-                    previewReport.beautyBreakdown,
-                  ],
-                  dragUI.hoverRow,
-                  dragUI.hoverCol
-                )
+              ? [
+                  // Conflicts this placement inflicts on neighbors go first —
+                  // §15: never ambushed — so they survive the panel's 4-line cap.
+                  ...collateralConflictLines(currentReport, previewReport, dragUI.hoverRow, dragUI.hoverCol),
+                  ...causeLinesForTile(
+                    [
+                      previewReport.productionBreakdown,
+                      previewReport.manaBreakdown,
+                      previewReport.happinessBreakdown,
+                      previewReport.beautyBreakdown,
+                    ],
+                    dragUI.hoverRow,
+                    dragUI.hoverCol
+                  ),
+                ]
               : undefined
           }
           prosperityBefore={currentReport.prosperity}
