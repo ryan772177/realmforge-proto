@@ -96,9 +96,19 @@ function unlockDependents(status: Record<QuestId, QuestStatus>): void {
 }
 
 // Pure reducer: applies one GameEvent to quest state, completing any active
-// quest whose trigger matches, then unlocking dependents. Quests with a null
-// reward (Q5 — "the wood is the reward") auto-claim on completion since
-// there's nothing to hand out via a claim action.
+// quest whose trigger matches, then unlocking dependents.
+//
+// Reward auto-claim: a quest auto-claims immediately on completion unless its
+// reward is a "chest" (Q7/Q9/Q10) — those stay a deliberate manual tap. This
+// matters because the Quest Panel (the only UI that shows a "Claim" button)
+// doesn't render until FTUE step 12, but Q1-Q4/Q6/Q8 routinely complete well
+// before that. Without auto-claim, a player who explores even slightly off
+// the exact minimal-spend path (starting gold is spent to the exact gold
+// down to Lumber Camp + Shrine + Sawmill = 100G, zero margin) can get soft-
+// locked: gold earned, no way to reach it, no way to afford the next
+// building. Found via a real playtest session. Chest quests still require
+// the player's tap — Q7's claim is also the specific event that ends FTUE
+// step 12, so it can't auto-fire without breaking that transition.
 export function applyGameEvent(state: QuestsState, event: GameEvent): QuestsState {
   const status = { ...state.status };
   let anyChanged = false;
@@ -124,7 +134,8 @@ export function applyGameEvent(state: QuestsState, event: GameEvent): QuestsStat
     for (const q of QUESTS) {
       if (status[q.id] !== "active") continue;
       if (matchesCondition(q, event)) {
-        status[q.id] = q.reward === null ? "claimed" : "completed";
+        const isChest = q.reward?.type === "chest";
+        status[q.id] = q.reward === null || !isChest ? "claimed" : "completed";
         changedThisPass = true;
       }
     }
@@ -133,6 +144,23 @@ export function applyGameEvent(state: QuestsState, event: GameEvent): QuestsStat
   }
 
   return anyChanged ? { status } : state;
+}
+
+// Sum of gold from quests that just auto-claimed (transitioned straight to
+// "claimed" between two status snapshots) — App.tsx grants this to the
+// player's resources in the same update, since there's no manual claim step
+// for these to hook the reward-grant into.
+export function newlyAutoClaimedGold(
+  before: Record<QuestId, QuestStatus>,
+  after: Record<QuestId, QuestStatus>
+): number {
+  let total = 0;
+  for (const id of Object.keys(after)) {
+    if (before[id] !== "claimed" && after[id] === "claimed") {
+      total += QUEST_BY_ID.get(id)?.reward?.gold ?? 0;
+    }
+  }
+  return total;
 }
 
 // For analytics: which quests newly entered completed/claimed between two

@@ -13,7 +13,7 @@ import type { GameEvent } from "./game/events";
 import { countAdjacentTerrain, hasNeighborBuildingWithinRange, getPlacedBuildingIds } from "./game/events";
 import {
   initialQuestsState, applyGameEvent as applyQuestEvent, claimQuest, allQuestDefs,
-  newlyEnteredCompletedOrClaimed,
+  newlyEnteredCompletedOrClaimed, newlyAutoClaimedGold,
 } from "./game/quests";
 import type { QuestsState, QuestId } from "./game/quests";
 import {
@@ -142,12 +142,17 @@ function isPlayerAction(event: GameEvent): boolean {
   return event.type === "building_placed" || event.type === "building_relocated" || event.type === "claim";
 }
 
+function addGold(resources: Resources, amount: number): Resources {
+  return amount > 0 ? { ...resources, gold: resources.gold + amount } : resources;
+}
+
 interface FoldResult {
   quests: QuestsState;
   ftue: FtueState;
   rival: RivalState | null;
   newlyCompletedQuestIds: QuestId[];
   rivalJustRevealed: boolean;
+  autoClaimedGold: number;
 }
 
 // Folds one or more GameEvents through quests + FTUE, revealing the rival the
@@ -187,8 +192,9 @@ function foldEvents(
   }
 
   const newlyCompletedQuestIds = newlyEnteredCompletedOrClaimed(prevQuestStatus, quests.status);
+  const autoClaimedGold = newlyAutoClaimedGold(prevQuestStatus, quests.status);
 
-  return { quests, ftue, rival, newlyCompletedQuestIds, rivalJustRevealed };
+  return { quests, ftue, rival, newlyCompletedQuestIds, rivalJustRevealed, autoClaimedGold };
 }
 
 function freshGameState(): GameState {
@@ -298,7 +304,14 @@ export default function App() {
   // which the caller already knows is happening).
   function trackFoldOutcome(next: FoldResult, prosperity: number) {
     for (const questId of next.newlyCompletedQuestIds) {
-      track("quest_completed", { quest_id: questId, t_ms: Date.now() - sessionStartRef.current });
+      const t_ms = Date.now() - sessionStartRef.current;
+      track("quest_completed", { quest_id: questId, t_ms });
+      // Quests with a non-chest reward auto-claim in the same step (see
+      // quests.ts) — log reward_claimed here too, since there's no separate
+      // manual-claim tap to hang that event off for these.
+      if (next.quests.status[questId] === "claimed") {
+        track("reward_claimed", { quest_id: questId, t_ms });
+      }
     }
     if (next.rivalJustRevealed && next.rival) {
       track("rival_revealed", { player_score: prosperity, rival_score: next.rival.score });
@@ -395,6 +408,7 @@ export default function App() {
     trackFoldOutcome(next, currentReport.prosperity);
     setGame(g2 => ({
       ...g2, quests: next.quests, ftue: next.ftue, rival: next.rival,
+      resources: addGold(g2.resources, next.autoClaimedGold),
       rivalBeatenPendingComeback: g2.rivalBeatenPendingComeback || rivalBeatenNow,
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -430,7 +444,10 @@ export default function App() {
       const prosperity = currentReportRef.current.prosperity;
       const next = foldEvents(g, [{ type: "bonus_dwell" }], prosperity);
       trackFoldOutcome(next, prosperity);
-      setGame(g2 => ({ ...g2, quests: next.quests, ftue: next.ftue, rival: next.rival }));
+      setGame(g2 => ({
+        ...g2, quests: next.quests, ftue: next.ftue, rival: next.rival,
+        resources: addGold(g2.resources, next.autoClaimedGold),
+      }));
     }, 1500);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -562,7 +579,7 @@ export default function App() {
           trackFoldOutcome(next, currentReport.prosperity);
           setGame(g2 => ({
             ...g2, quests: next.quests, ftue: next.ftue, rival: next.rival,
-            resources, pendingAccrual: pending, totalWoodClaimed,
+            resources: addGold(resources, next.autoClaimedGold), pendingAccrual: pending, totalWoodClaimed,
           }));
         } else {
           // No claim waiting — tapping a placed building opens its detail
@@ -614,7 +631,7 @@ export default function App() {
       setGame(g2 => ({
         ...g2, quests: next.quests, ftue: next.ftue, rival: next.rival,
         board: newBoard,
-        resources: newRes,
+        resources: addGold(newRes, next.autoClaimedGold),
       }));
     } else {
       const { fromRow, fromCol } = drag.source;
@@ -651,7 +668,7 @@ export default function App() {
       setGame(g2 => ({
         ...g2, quests: next.quests, ftue: next.ftue, rival: next.rival,
         board: newBoard,
-        resources: newRes,
+        resources: addGold(newRes, next.autoClaimedGold),
         relocationCount: g2.relocationCount + 1,
         pendingAccrual: movePendingAccrual(g2.pendingAccrual, fromKey, toKey),
       }));
@@ -672,7 +689,11 @@ export default function App() {
     track("breakdown_opened", { score: currentReport.prosperity, dwell_ms: 0 });
     const next = foldEvents(g, [{ type: "breakdown_opened" }], currentReport.prosperity);
     trackFoldOutcome(next, currentReport.prosperity);
-    setGame(g2 => ({ ...g2, quests: next.quests, ftue: next.ftue, rival: next.rival, breakdownOpen: true }));
+    setGame(g2 => ({
+      ...g2, quests: next.quests, ftue: next.ftue, rival: next.rival,
+      resources: addGold(g2.resources, next.autoClaimedGold),
+      breakdownOpen: true,
+    }));
   }
 
   function handleClaimQuest(questId: QuestId) {
@@ -683,7 +704,10 @@ export default function App() {
     const resources = reward?.gold ? { ...g.resources, gold: g.resources.gold + reward.gold } : g.resources;
     const next = foldEvents({ ...g, quests }, [{ type: "reward_claimed", questId }], currentReport.prosperity);
     trackFoldOutcome(next, currentReport.prosperity);
-    setGame(g2 => ({ ...g2, quests: next.quests, ftue: next.ftue, rival: next.rival, resources }));
+    setGame(g2 => ({
+      ...g2, quests: next.quests, ftue: next.ftue, rival: next.rival,
+      resources: addGold(resources, next.autoClaimedGold),
+    }));
   }
 
   function handleRivalViewedOrOpened() {
@@ -691,7 +715,10 @@ export default function App() {
     const g = gameRef.current;
     const next = foldEvents(g, [{ type: "rival_dwell_or_open" }], currentReport.prosperity);
     trackFoldOutcome(next, currentReport.prosperity);
-    setGame(g2 => ({ ...g2, quests: next.quests, ftue: next.ftue, rival: next.rival }));
+    setGame(g2 => ({
+      ...g2, quests: next.quests, ftue: next.ftue, rival: next.rival,
+      resources: addGold(g2.resources, next.autoClaimedGold),
+    }));
   }
 
   function handleImproveMyScore() {
