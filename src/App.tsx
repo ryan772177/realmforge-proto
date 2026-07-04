@@ -465,7 +465,7 @@ export default function App() {
         text = "Same tile.";
       } else {
         const unlimited = { gold: 999999, wood: 999999, stone: 999999, mana: 999999, gems: 999999 };
-        const vr = validatePlacement(g.board, drag.buildingId, row, col, unlimited);
+        const vr = validatePlacement(g.board, drag.buildingId, row, col, unlimited, { row: src.fromRow, col: src.fromCol });
         valid = vr.valid;
         if (!valid && !vr.valid) text = vr.playerText;
         if (valid && !isFreeRelocation(g.ftue) && !canAfford(g.resources, RELOCATION_COST)) {
@@ -565,7 +565,7 @@ export default function App() {
       const toKey = `${row},${col}`;
 
       const unlimited = { gold: 999999, wood: 999999, stone: 999999, mana: 999999, gems: 999999 };
-      const vr = validatePlacement(g.board, drag.buildingId, row, col, unlimited);
+      const vr = validatePlacement(g.board, drag.buildingId, row, col, unlimited, { row: fromRow, col: fromCol });
       if (!vr.valid) { setRejectionText(vr.playerText); return; }
 
       if (!isFreeRelocation(g.ftue) && !canAfford(g.resources, RELOCATION_COST)) {

@@ -156,6 +156,41 @@ describe("valid placements — happy paths", () => {
   });
 });
 
+describe("max_count_reached", () => {
+  it("rejects placing a second Town Hall (maxCount: 1)", () => {
+    const board = placeBuilding(buildBoard(), "B01", 2, 2);
+    const result = validatePlacement(board, "B01", 4, 4, FULL_RESOURCES);
+    expect(result.valid).toBe(false);
+    if (!result.valid) expect(result.reason).toBe("max_count_reached");
+  });
+
+  it("accepts placing the first Town Hall", () => {
+    const result = validatePlacement(buildBoard(), "B01", 2, 2, FULL_RESOURCES);
+    expect(result.valid).toBe(true);
+  });
+
+  it("does not restrict a building with maxCount: null (Lumber Camp)", () => {
+    let board = placeBuilding(buildBoard(), "B02", 1, 0);
+    board = placeBuilding(board, "B02", 0, 0);
+    const result = validatePlacement(board, "B02", 5, 5, FULL_RESOURCES);
+    expect(result.valid).toBe(true);
+  });
+
+  it("allows relocating the sole Town Hall when excludeFrom names its own tile", () => {
+    const board = placeBuilding(buildBoard(), "B01", 2, 2);
+    const result = validatePlacement(board, "B01", 4, 4, FULL_RESOURCES, { row: 2, col: 2 });
+    expect(result.valid).toBe(true);
+  });
+
+  it("still rejects a second Town Hall during relocation if excludeFrom names a different tile", () => {
+    let board = placeBuilding(buildBoard(), "B01", 2, 2);
+    board = placeBuilding(board, "B03", 0, 0); // unrelated building at the "excluded" tile
+    const result = validatePlacement(board, "B01", 4, 4, FULL_RESOURCES, { row: 0, col: 0 });
+    expect(result.valid).toBe(false);
+    if (!result.valid) expect(result.reason).toBe("max_count_reached");
+  });
+});
+
 describe("rejection priority ordering", () => {
   it("out_of_bounds takes priority over occupied", () => {
     const board = placeBuilding(buildBoard(), "B01", 2, 2);
@@ -163,6 +198,24 @@ describe("rejection priority ordering", () => {
     const result = validatePlacement(board, "B01", -1, -1, FULL_RESOURCES);
     expect(result.valid).toBe(false);
     if (!result.valid) expect(result.reason).toBe("out_of_bounds");
+  });
+
+  it("occupied takes priority over max_count_reached", () => {
+    let board = placeBuilding(buildBoard(), "B01", 2, 2);
+    board = placeBuilding(board, "B03", 4, 0);
+    const result = validatePlacement(board, "B01", 4, 0, FULL_RESOURCES);
+    expect(result.valid).toBe(false);
+    if (!result.valid) expect(result.reason).toBe("occupied");
+  });
+
+  it("max_count_reached takes priority over needs_river", () => {
+    // A second Town Hall attempt should fail on max_count before any
+    // terrain-requirement check would even apply (Town Hall has none, but
+    // this documents that max_count is checked early, right after occupied).
+    const board = placeBuilding(buildBoard(), "B01", 2, 2);
+    const result = validatePlacement(board, "B01", 4, 0, EMPTY_RESOURCES);
+    expect(result.valid).toBe(false);
+    if (!result.valid) expect(result.reason).toBe("max_count_reached");
   });
 
   it("occupied takes priority over needs_river", () => {
