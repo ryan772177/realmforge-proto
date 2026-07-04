@@ -1,0 +1,31 @@
+{
+  "$schema": "./schemas/rival.schema.json",
+  "firstRevealOffset": 34,
+  "growthBand": { "min": 1.05, "max": 1.15 },
+  "maxLeadOverPlayer": 150,
+  "betweenSessionGrowthPercent": { "min": 5, "max": 10 },
+  "comebackPercent": { "min": 8, "max": 12 },
+  "updateEveryNActions": 3,
+  "neverDecreases": true,
+  "names": [
+    "Thornwick",
+    "Maplecrown",
+    "Emberfall",
+    "Stonehaven",
+    "Ashveil",
+    "Goldmere",
+    "Ironpeak",
+    "Fernwald",
+    "Crystalholm",
+    "Duskreach",
+    "Ravenmont",
+    "Silverbourne"
+  ],
+  "microcopy": {
+    "reveal":  "Rival realm {name}: {rivalScore}. You: {playerScore}.",
+    "behind":  "You trail {name} by {delta}.",
+    "close":   "Almost there — {delta} points behind.",
+    "ahead":   "Realm Bested! You lead by {delta}.",
+    "return":  "{name} grew while you were away."
+  }
+}

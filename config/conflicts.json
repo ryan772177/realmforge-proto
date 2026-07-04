@@ -1,0 +1,35 @@
+{
+  "$schema": "./schemas/conflicts.schema.json",
+  "conflicts": [
+    {
+      "id": "CON_01",
+      "source": "B12",
+      "target": "B03",
+      "range": 2,
+      "penalty": -10,
+      "type": "happiness",
+      "playerText": "−10 Happiness: cottages hate forge smoke",
+      "note": "Forge inflicts -10 Happiness per Cottage within Chebyshev 2. Applied during preview before commit."
+    },
+    {
+      "id": "CON_02",
+      "source": "B12",
+      "target": "B11",
+      "range": 2,
+      "penalty": -10,
+      "type": "beauty",
+      "playerText": "−10 Beauty: smoke spoils the garden",
+      "note": "Forge inflicts -10 Beauty per Garden within Chebyshev 2. Beauty floors at 0 per building."
+    },
+    {
+      "id": "CON_03",
+      "source": "B06",
+      "target": "B03",
+      "range": 1,
+      "penalty": -5,
+      "type": "happiness",
+      "playerText": "−5 Happiness: quarry dust",
+      "note": "Quarry inflicts -5 Happiness per adjacent Cottage only (range 1). Gentle early conflict."
+    }
+  ]
+}

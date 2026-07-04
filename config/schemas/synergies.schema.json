@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "synergies.schema.json",
+  "type": "object",
+  "required": ["synergies"],
+  "properties": {
+    "synergies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "source", "target", "type", "bonus", "range", "playerText"],
+        "properties": {
+          "id":         { "type": "string" },
+          "source":     { "type": "string" },
+          "target":     { "type": "string" },
+          "type":       { "type": "string", "enum": ["output_percent","happiness"] },
+          "bonus":      { "type": "number" },
+          "range":      { "type": "integer", "minimum": 1, "maximum": 2 },
+          "cap":        { "type": ["integer","null"] },
+          "playerText": { "type": "string" }
+        }
+      }
+    }
+  }
+}

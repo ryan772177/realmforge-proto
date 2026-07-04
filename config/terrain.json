@@ -1,0 +1,47 @@
+{
+  "$schema": "./schemas/terrain.schema.json",
+  "terrainTypes": {
+    "F": {
+      "id": "F",
+      "name": "Forest",
+      "description": "Cluster of stylized trees"
+    },
+    "M": {
+      "id": "M",
+      "name": "Mountain",
+      "description": "Grey peaks on tile"
+    },
+    "R": {
+      "id": "R",
+      "name": "River",
+      "description": "Blue ribbon crossing the map"
+    },
+    "S": {
+      "id": "S",
+      "name": "ManaSpring",
+      "description": "Glowing blue-white pool"
+    },
+    "C": {
+      "id": "C",
+      "name": "ClearLand",
+      "description": "Plain grass — neutral, everything placeable"
+    }
+  },
+  "map": {
+    "rows": 6,
+    "cols": 6,
+    "tiles": [
+      ["F", "F", "S", "C", "M", "M"],
+      ["F", "F", "C", "R", "M", "C"],
+      ["C", "C", "R", "R", "M", "C"],
+      ["C", "S", "C", "R", "C", "M"],
+      ["C", "C", "C", "R", "C", "C"],
+      ["C", "C", "C", "F", "F", "F"]
+    ],
+    "_counts": { "F": 7, "M": 5, "R": 5, "S": 2, "C": 17 },
+    "_clusters": {
+      "Forest": ["cluster-A (4 tiles top-left: 0,0 0,1 1,0 1,1)", "cluster-B (3 tiles bottom-right: 5,3 5,4 5,5)"],
+      "River": ["single bend: col 3 rows 1-4 with jog at row 2"]
+    }
+  }
+}

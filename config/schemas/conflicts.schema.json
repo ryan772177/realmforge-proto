@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "conflicts.schema.json",
+  "type": "object",
+  "required": ["conflicts"],
+  "properties": {
+    "conflicts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "source", "target", "range", "penalty", "type", "playerText"],
+        "properties": {
+          "id":         { "type": "string" },
+          "source":     { "type": "string" },
+          "target":     { "type": "string" },
+          "range":      { "type": "integer", "minimum": 1, "maximum": 2 },
+          "penalty":    { "type": "number", "maximum": 0 },
+          "type":       { "type": "string", "enum": ["happiness","beauty"] },
+          "playerText": { "type": "string" }
+        }
+      }
+    }
+  }
+}

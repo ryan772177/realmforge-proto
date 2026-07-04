@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "terrain.schema.json",
+  "type": "object",
+  "required": ["terrainTypes", "map"],
+  "properties": {
+    "terrainTypes": {
+      "type": "object",
+      "minProperties": 5,
+      "additionalProperties": {
+        "type": "object",
+        "required": ["id", "name", "description"],
+        "properties": {
+          "id":          { "type": "string", "enum": ["F","M","R","S","C"] },
+          "name":        { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "map": {
+      "type": "object",
+      "required": ["rows", "cols", "tiles"],
+      "properties": {
+        "rows":  { "type": "integer", "const": 6 },
+        "cols":  { "type": "integer", "const": 6 },
+        "tiles": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["F","M","R","S","C"] },
+            "minItems": 6,
+            "maxItems": 6
+          },
+          "minItems": 6,
+          "maxItems": 6
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "ftue.schema.json",
+  "type": "object",
+  "required": ["freeRelocationUntilStep", "steps", "ftueExitState"],
+  "properties": {
+    "freeRelocationUntilStep": { "type": "integer" },
+    "steps": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "required": ["id", "playerAction", "microcopy", "systemTaught", "analyticsEvent", "successCondition", "fallback"],
+        "properties": {
+          "id":               { "type": "integer", "minimum": 1, "maximum": 12 },
+          "playerAction":     { "type": "string" },
+          "microcopy":        { "type": "string" },
+          "systemTaught":     { "type": "string" },
+          "analyticsEvent":   { "type": "string" },
+          "successCondition": { "type": "string" },
+          "fallback": {
+            "type": "object",
+            "required": ["delaySeconds", "hint"],
+            "properties": {
+              "delaySeconds": { "type": "integer" },
+              "hint":         { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "ftueExitState": { "type": "object" }
+  }
+}

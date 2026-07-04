@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "quests.schema.json",
+  "type": "object",
+  "required": ["quests"],
+  "properties": {
+    "quests": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "required": ["id", "objective", "systemTaught", "triggerEvent", "triggerCondition", "completionEvent"],
+        "properties": {
+          "id":               { "type": "string", "pattern": "^Q[0-9]+$" },
+          "objective":        { "type": "string" },
+          "reward":           { "type": ["object","null"] },
+          "systemTaught":     { "type": "string" },
+          "triggerEvent":     { "type": "string" },
+          "triggerCondition": { "type": "object" },
+          "completionEvent":  { "type": "string" },
+          "unlocksAfter":     { "type": ["string","null"] }
+        }
+      }
+    }
+  }
+}

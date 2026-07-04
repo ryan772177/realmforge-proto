@@ -1,0 +1,93 @@
+{
+  "$schema": "./schemas/synergies.schema.json",
+  "synergies": [
+    {
+      "id": "SYN_01",
+      "source": "B01",
+      "target": "producers",
+      "type": "output_percent",
+      "bonus": 0.10,
+      "range": 2,
+      "cap": null,
+      "playerText": "+10% from Town Hall",
+      "note": "Town Hall grants +10% output to all producer buildings within Chebyshev 2"
+    },
+    {
+      "id": "SYN_02",
+      "source": "B05",
+      "target": "B02",
+      "type": "output_percent",
+      "bonus": 0.15,
+      "range": 2,
+      "cap": 1,
+      "playerText": "+15% from nearby Sawmill",
+      "note": "Sawmill grants +15% to each Lumber Camp within range 2 (each LC can only receive this once)"
+    },
+    {
+      "id": "SYN_03",
+      "source": "B02",
+      "target": "B05",
+      "type": "output_percent",
+      "bonus": 0.10,
+      "range": 2,
+      "cap": 3,
+      "playerText": "+10% per Lumber Camp nearby",
+      "note": "Sawmill receives +10% per Lumber Camp within range 2, up to 3 camps"
+    },
+    {
+      "id": "SYN_04",
+      "source": "B06",
+      "target": "B12",
+      "type": "output_percent",
+      "bonus": 0.20,
+      "range": 2,
+      "cap": 1,
+      "playerText": "+20% from nearby Quarry",
+      "note": "Quarry grants +20% to Forge within range 2"
+    },
+    {
+      "id": "SYN_05",
+      "source": "B04",
+      "target": "B03",
+      "type": "happiness",
+      "bonus": 5,
+      "range": 2,
+      "cap": 3,
+      "playerText": "+5 Happiness per nearby Cottage",
+      "note": "Shrine aura: +5 Happiness per Cottage within range 2, up to 3 Cottages"
+    },
+    {
+      "id": "SYN_06",
+      "source": "B10",
+      "target": "B03",
+      "type": "happiness",
+      "bonus": 5,
+      "range": 2,
+      "cap": 4,
+      "playerText": "+5 Happiness per nearby Cottage",
+      "note": "Watchtower aura: +5 Happiness per Cottage within range 2, up to 4 Cottages"
+    },
+    {
+      "id": "SYN_07",
+      "source": "B11",
+      "target": "B03",
+      "type": "happiness",
+      "bonus": 5,
+      "range": 1,
+      "cap": 2,
+      "playerText": "+5 Happiness per Cottage beside it",
+      "note": "Garden aura: +5 Happiness per adjacent Cottage (range 1 only), up to 2 Cottages"
+    },
+    {
+      "id": "SYN_08",
+      "source": "B09",
+      "target": "unique_types",
+      "type": "output_percent",
+      "bonus": 0.10,
+      "range": 2,
+      "cap": 5,
+      "playerText": "+10% per different neighbor",
+      "note": "Market receives +10% per unique building type within range 2, up to 5 types"
+    }
+  ]
+}

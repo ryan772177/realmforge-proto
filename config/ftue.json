@@ -1,0 +1,159 @@
+{
+  "$schema": "./schemas/ftue.schema.json",
+  "freeRelocationUntilStep": 12,
+  "steps": [
+    {
+      "id": 1,
+      "time": "0:05",
+      "uiElement": "Grid + ghost Town Hall attached to pulsing tray slot",
+      "playerAction": "Place Town Hall",
+      "microcopy": "Place your Town Hall.",
+      "systemTaught": "placement",
+      "analyticsEvent": "town_hall_placed",
+      "successCondition": "Commit in <30s",
+      "fallback": { "delaySeconds": 10, "hint": "tile_shimmer" },
+      "notShownYet": ["resources", "quests", "rival", "score"]
+    },
+    {
+      "id": 2,
+      "time": "0:30",
+      "uiElement": "Tray + adjacency report",
+      "playerAction": "Place Lumber Camp near Forest",
+      "microcopy": "Wood buildings love Forests.",
+      "systemTaught": "terrain_bonus",
+      "analyticsEvent": "lumber_camp_placed",
+      "successCondition": "Placed touching ≥1 Forest",
+      "fallback": { "delaySeconds": 10, "hint": "forest_tiles_pulse" },
+      "notShownYet": ["stone", "mana", "synergies"]
+    },
+    {
+      "id": 3,
+      "time": "0:45",
+      "uiElement": "Adjacency report callout",
+      "playerAction": "Read bonus",
+      "microcopy": "+20% for every Forest beside it.",
+      "systemTaught": "bonus_stacking",
+      "analyticsEvent": "bonus_viewed",
+      "successCondition": "Dwell ≥1.5s on report",
+      "fallback": { "delaySeconds": 10, "hint": "report_enlarges_once" },
+      "notShownYet": ["conflicts"]
+    },
+    {
+      "id": 4,
+      "time": "1:00",
+      "uiElement": "Better-spot highlight (3-Forest tile)",
+      "playerAction": "Relocate Lumber Camp (free)",
+      "microcopy": "Moving is free. Find a better spot.",
+      "systemTaught": "relocation",
+      "analyticsEvent": "ftue_relocation_done",
+      "successCondition": "Camp moved to ≥ same Forest bonus as original",
+      "fallback": { "delaySeconds": 10, "hint": "ghost_arrow_to_3forest_tile" },
+      "notShownYet": ["relocation_cost"]
+    },
+    {
+      "id": 5,
+      "time": "1:15",
+      "uiElement": "Bouncing resource icon on Lumber Camp",
+      "playerAction": "Claim Wood",
+      "microcopy": "Collect your Wood.",
+      "systemTaught": "collection",
+      "analyticsEvent": "first_claim",
+      "successCondition": "Wood ≥30",
+      "fallback": { "delaySeconds": 10, "hint": "icon_bounce_amplifies" },
+      "notShownYet": ["gold_counter", "stone_counter", "mana_counter"]
+    },
+    {
+      "id": 6,
+      "time": "1:25",
+      "uiElement": "Tray: Cottage (30 Wood)",
+      "playerAction": "Place Cottage",
+      "microcopy": "Cottages grow your population.",
+      "systemTaught": "cost_and_population_score",
+      "analyticsEvent": "cottage_placed",
+      "successCondition": "Cottage committed",
+      "fallback": { "delaySeconds": 10, "hint": "cost_tooltip" },
+      "notShownYet": ["happiness_math_detail"]
+    },
+    {
+      "id": 7,
+      "time": "1:45",
+      "uiElement": "Score breakdown panel",
+      "playerAction": "Tap Prosperity score",
+      "microcopy": "Tap your score anytime. No secrets.",
+      "systemTaught": "transparency",
+      "analyticsEvent": "breakdown_opened",
+      "successCondition": "Panel opened",
+      "fallback": { "delaySeconds": 15, "hint": "score_pulses" },
+      "notShownYet": ["imbalance_line_zero_state_hidden"]
+    },
+    {
+      "id": 8,
+      "time": "2:10",
+      "uiElement": "Tray: Shrine",
+      "playerAction": "Place Shrine near Cottage",
+      "microcopy": "Shrines make nearby cottages happy.",
+      "systemTaught": "radius_aura_range_2",
+      "analyticsEvent": "shrine_placed",
+      "successCondition": "Cottage within range 2 of Shrine",
+      "fallback": { "delaySeconds": 10, "hint": "range_circle_preview_auto_shows" },
+      "notShownYet": ["mana_score"]
+    },
+    {
+      "id": 9,
+      "time": "2:40",
+      "uiElement": "Tray: Sawmill",
+      "playerAction": "Place Sawmill near Lumber Camp",
+      "microcopy": "Sawmills boost nearby Lumber Camps.",
+      "systemTaught": "building_synergy",
+      "analyticsEvent": "sawmill_placed",
+      "successCondition": "Lumber Camp within range 2 of Sawmill",
+      "fallback": { "delaySeconds": 10, "hint": "synergy_line_draws_camp_to_mill" },
+      "notShownYet": ["conflicts"]
+    },
+    {
+      "id": 10,
+      "time": "3:10",
+      "uiElement": "Score ticks up live",
+      "playerAction": "Watch Prosperity rise past 250",
+      "microcopy": "Prosperity 250 reached!",
+      "systemTaught": "score_equals_sum_of_choices",
+      "analyticsEvent": "prosperity_250",
+      "successCondition": "Score ≥250",
+      "fallback": { "delaySeconds": 10, "hint": "quest_hint_to_claim" },
+      "notShownYet": []
+    },
+    {
+      "id": 11,
+      "time": "3:30",
+      "uiElement": "Rival card slides in",
+      "playerAction": "View rival comparison",
+      "microcopy": "Rival realm Thornwick: 340. Beat them.",
+      "systemTaught": "competition",
+      "analyticsEvent": "rival_viewed",
+      "successCondition": "Card opened or dwell ≥2s",
+      "fallback": { "delaySeconds": 20, "hint": "card_re_peeks" },
+      "notShownYet": ["league_language", "brackets_language"]
+    },
+    {
+      "id": 12,
+      "time": "4:00–5:00",
+      "uiElement": "Quest chest + open tray (all 12 buildings)",
+      "playerAction": "Claim reward; free build",
+      "microcopy": "Claim your reward. Your realm, your rules.",
+      "systemTaught": "reward_loop_and_autonomy",
+      "analyticsEvent": "freeplay_start",
+      "successCondition": "Chest claimed; ≥1 unprompted action by player",
+      "fallback": { "delaySeconds": 10, "hint": "chest_glow" },
+      "notShownYet": [],
+      "note": "FTUE ends here. Relocation now costs 10 Gold. Announced: 'Moving now costs 10 Gold.'"
+    }
+  ],
+  "ftueExitState": {
+    "buildingsPlaced": 5,
+    "relocationsCompleted": 1,
+    "score": 306,
+    "rivalScore": 340,
+    "questsOpen": ["Q8", "Q9", "Q10"],
+    "relocationCostAfterFtue": { "gold": 10 }
+  }
+}

@@ -1,0 +1,115 @@
+{
+  "$schema": "./schemas/quests.schema.json",
+  "quests": [
+    {
+      "id": "Q1",
+      "objective": "Place your Town Hall",
+      "reward": { "gold": 50 },
+      "systemTaught": "placement",
+      "triggerEvent": "building_placed",
+      "triggerCondition": { "building_id": "B01" },
+      "completionEvent": "q1_done",
+      "unlocksAfter": null,
+      "note": "First action; reward funds Lumber Camp"
+    },
+    {
+      "id": "Q2",
+      "objective": "Place a Lumber Camp beside a Forest",
+      "reward": { "gold": 20 },
+      "systemTaught": "terrain_bonus",
+      "triggerEvent": "building_placed",
+      "triggerCondition": { "building_id": "B02", "adjacency": { "terrain": "F", "min": 1 } },
+      "completionEvent": "q2_done",
+      "unlocksAfter": "Q1",
+      "note": "Forces the terrain lesson"
+    },
+    {
+      "id": "Q3",
+      "objective": "Earn a +40% Forest bonus",
+      "reward": { "gold": 30 },
+      "systemTaught": "bonus_stacking",
+      "triggerEvent": "building_placed",
+      "triggerCondition": { "building_id": "B02", "terrain_multiplier_min": 1.40 },
+      "completionEvent": "q3_done",
+      "unlocksAfter": "Q2",
+      "note": "Rewards reading the report, not just placing"
+    },
+    {
+      "id": "Q4",
+      "objective": "Move a building",
+      "reward": { "gold": 20 },
+      "systemTaught": "relocation",
+      "triggerEvent": "building_relocated",
+      "triggerCondition": {},
+      "completionEvent": "q4_done",
+      "unlocksAfter": "Q3",
+      "note": "Rehearses the north-star behavior"
+    },
+    {
+      "id": "Q5",
+      "objective": "Collect 30 Wood",
+      "reward": null,
+      "systemTaught": "collection",
+      "triggerEvent": "claim",
+      "triggerCondition": { "resource": "wood", "cumulative_min": 30 },
+      "completionEvent": "q5_done",
+      "unlocksAfter": "Q4",
+      "note": "The wood itself is the reward; funds the Cottage"
+    },
+    {
+      "id": "Q6",
+      "objective": "Place a Cottage and a Shrine",
+      "reward": { "gold": 30 },
+      "systemTaught": "population_auras",
+      "triggerEvent": "building_placed",
+      "triggerCondition": { "all_placed": ["B03", "B04"] },
+      "completionEvent": "q6_done",
+      "unlocksAfter": "Q5",
+      "note": "Builds the happiness district"
+    },
+    {
+      "id": "Q7",
+      "objective": "Reach 250 Prosperity",
+      "reward": { "gold": 100, "type": "chest" },
+      "systemTaught": "score_as_goal",
+      "triggerEvent": "score_updated",
+      "triggerCondition": { "prosperity_min": 250 },
+      "completionEvent": "q7_done",
+      "unlocksAfter": "Q6",
+      "note": "The FTUE reward beat (step 12)"
+    },
+    {
+      "id": "Q8",
+      "objective": "Place a Sawmill near a Lumber Camp",
+      "reward": { "gold": 30 },
+      "systemTaught": "synergy",
+      "triggerEvent": "building_placed",
+      "triggerCondition": { "building_id": "B05", "neighbor": { "building_id": "B02", "range": 2 } },
+      "completionEvent": "q8_done",
+      "unlocksAfter": "Q7",
+      "note": "Building pairs"
+    },
+    {
+      "id": "Q9",
+      "objective": "Beat your rival's score",
+      "reward": { "gold": 150, "type": "chest" },
+      "systemTaught": "competition",
+      "triggerEvent": "score_updated",
+      "triggerCondition": { "beats_rival": true },
+      "completionEvent": "q9_done",
+      "unlocksAfter": "rival_revealed",
+      "note": "The session goal; deliberately left open at FTUE end"
+    },
+    {
+      "id": "Q10",
+      "objective": "Reach 500 Prosperity",
+      "reward": { "gold": 200, "type": "chest" },
+      "systemTaught": "long_loop_pull",
+      "triggerEvent": "score_updated",
+      "triggerCondition": { "prosperity_min": 500 },
+      "completionEvent": "q10_done",
+      "unlocksAfter": "Q9",
+      "note": "Requires post-FTUE buildings and good layout; the come-back-tomorrow quest"
+    }
+  ]
+}

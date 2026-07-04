@@ -1,0 +1,269 @@
+{
+  "$schema": "./schemas/buildings.schema.json",
+  "buildings": [
+    {
+      "id": "B01",
+      "name": "Town Hall",
+      "category": "core",
+      "cost": { "gold": 0 },
+      "maxCount": 1,
+      "baseOutput": {},
+      "prosperityBase": { "production": 100, "pop": 20 },
+      "terrainBonus": null,
+      "aura": {
+        "type": "output_percent",
+        "bonus": 0.10,
+        "range": 2,
+        "cap": null,
+        "targets": "producers"
+      },
+      "neighborBonus": null,
+      "neighborConflict": null,
+      "unlockStep": "ftue_1",
+      "explanation": "Your realm's heart — buildings near it work harder."
+    },
+    {
+      "id": "B02",
+      "name": "Lumber Camp",
+      "category": "production",
+      "cost": { "gold": 50 },
+      "maxCount": null,
+      "baseOutput": { "wood": 10 },
+      "prosperityBase": { "production": 40 },
+      "terrainBonus": {
+        "terrain": "F",
+        "rate": 0.20,
+        "cap": 3,
+        "scope": "adjacent"
+      },
+      "neighborBonus": {
+        "source": "B05",
+        "bonus": 0.15,
+        "range": 2,
+        "cap": 1,
+        "direction": "received"
+      },
+      "neighborConflict": null,
+      "unlockStep": "ftue_2",
+      "explanation": "Cuts wood — loves standing beside Forests."
+    },
+    {
+      "id": "B03",
+      "name": "Cottage",
+      "category": "housing",
+      "cost": { "wood": 30 },
+      "maxCount": null,
+      "baseOutput": {},
+      "prosperityBase": { "pop": 10 },
+      "terrainBonus": null,
+      "neighborBonus": null,
+      "neighborConflict": [
+        { "source": "B12", "penalty": -10, "type": "happiness", "range": 2 },
+        { "source": "B06", "penalty": -5,  "type": "happiness", "range": 1 }
+      ],
+      "unlockStep": "ftue_6",
+      "explanation": "Homes for citizens — keep them happy and away from smoke."
+    },
+    {
+      "id": "B04",
+      "name": "Shrine",
+      "category": "magic",
+      "cost": { "wood": 40, "gold": 20 },
+      "maxCount": null,
+      "baseOutput": {},
+      "prosperityBase": { "happiness": 10 },
+      "terrainBonus": null,
+      "aura": {
+        "type": "happiness",
+        "bonus": 5,
+        "range": 2,
+        "cap": 3,
+        "targets": "B03"
+      },
+      "springBonus": { "terrain": "S", "bonus": 10, "type": "mana", "scope": "adjacent" },
+      "neighborBonus": null,
+      "neighborConflict": null,
+      "unlockStep": "ftue_8",
+      "explanation": "Blesses nearby cottages with happiness."
+    },
+    {
+      "id": "B05",
+      "name": "Sawmill",
+      "category": "refinement",
+      "cost": { "wood": 60, "gold": 30 },
+      "maxCount": null,
+      "baseOutput": { "gold": 5 },
+      "prosperityBase": { "production": 30 },
+      "terrainBonus": null,
+      "neighborBonus": {
+        "source": "B02",
+        "bonus": 0.10,
+        "range": 2,
+        "cap": 3,
+        "direction": "received",
+        "note": "Sawmill receives +10% per LC within 2 (cap 3); also grants +15% to those LCs"
+      },
+      "neighborConflict": null,
+      "unlockStep": "ftue_9",
+      "explanation": "Pairs with Lumber Camps — both work better together."
+    },
+    {
+      "id": "B06",
+      "name": "Quarry",
+      "category": "production",
+      "cost": { "gold": 60 },
+      "maxCount": null,
+      "baseOutput": { "stone": 8 },
+      "prosperityBase": { "production": 40 },
+      "terrainBonus": {
+        "terrain": "M",
+        "rate": 0.20,
+        "cap": 3,
+        "scope": "adjacent"
+      },
+      "neighborBonus": null,
+      "neighborConflict": [
+        { "target": "B03", "penalty": -5, "type": "happiness", "range": 1 }
+      ],
+      "unlockStep": "post_ftue",
+      "explanation": "Digs stone from mountains — dusty for next-door cottages."
+    },
+    {
+      "id": "B07",
+      "name": "Fishing Dock",
+      "category": "production",
+      "cost": { "wood": 40 },
+      "maxCount": null,
+      "baseOutput": { "gold": 6 },
+      "prosperityBase": { "production": 40 },
+      "terrainBonus": {
+        "terrain": "R",
+        "rate": 0.15,
+        "cap": 3,
+        "scope": "adjacent",
+        "requirement": true
+      },
+      "neighborBonus": null,
+      "neighborConflict": null,
+      "unlockStep": "post_ftue",
+      "explanation": "Fishes the river — must touch one."
+    },
+    {
+      "id": "B08",
+      "name": "Mage Tower",
+      "category": "magic",
+      "cost": { "stone": 50, "gold": 30 },
+      "maxCount": null,
+      "baseOutput": { "mana": 6 },
+      "prosperityBase": { "mana": 50 },
+      "terrainBonus": {
+        "terrain": "S",
+        "rate": 0.25,
+        "cap": 2,
+        "scope": "adjacent"
+      },
+      "neighborBonus": null,
+      "neighborConflict": null,
+      "unlockStep": "post_ftue",
+      "explanation": "Draws power from Mana Springs."
+    },
+    {
+      "id": "B09",
+      "name": "Market",
+      "category": "trade",
+      "cost": { "gold": 80 },
+      "maxCount": null,
+      "baseOutput": { "gold": 8 },
+      "prosperityBase": { "production": 35 },
+      "terrainBonus": null,
+      "neighborBonus": {
+        "type": "unique_neighbor_types",
+        "bonus": 0.10,
+        "range": 2,
+        "cap": 5,
+        "direction": "received"
+      },
+      "neighborConflict": null,
+      "unlockStep": "post_ftue",
+      "explanation": "Thrives surrounded by different neighbors."
+    },
+    {
+      "id": "B10",
+      "name": "Watchtower",
+      "category": "defense",
+      "cost": { "stone": 40 },
+      "maxCount": null,
+      "baseOutput": {},
+      "prosperityBase": {},
+      "terrainBonus": null,
+      "aura": {
+        "type": "happiness",
+        "bonus": 5,
+        "range": 2,
+        "cap": 4,
+        "targets": "B03"
+      },
+      "neighborBonus": null,
+      "neighborConflict": null,
+      "unlockStep": "post_ftue",
+      "explanation": "Citizens sleep better near a watchtower."
+    },
+    {
+      "id": "B11",
+      "name": "Garden",
+      "category": "beauty",
+      "cost": { "gold": 30, "mana": 10 },
+      "maxCount": null,
+      "baseOutput": {},
+      "prosperityBase": { "beauty": 30 },
+      "terrainBonus": {
+        "terrain": "R",
+        "bonus": 10,
+        "type": "beauty",
+        "scope": "adjacent",
+        "note": "Flat +10 Beauty per adjacent River, not a multiplier"
+      },
+      "aura": {
+        "type": "happiness",
+        "bonus": 5,
+        "range": 1,
+        "cap": 2,
+        "targets": "B03"
+      },
+      "neighborBonus": null,
+      "neighborConflict": [
+        { "source": "B12", "penalty": -10, "type": "beauty", "range": 2 }
+      ],
+      "unlockStep": "post_ftue",
+      "explanation": "A lovely garden — prettier by the river, ruined by forge smoke."
+    },
+    {
+      "id": "B12",
+      "name": "Forge",
+      "category": "refinement",
+      "cost": { "stone": 50, "gold": 50 },
+      "maxCount": null,
+      "baseOutput": { "gold": 12 },
+      "prosperityBase": { "production": 50 },
+      "terrainBonus": {
+        "terrain": "M",
+        "rate": 0.20,
+        "cap": 2,
+        "scope": "adjacent"
+      },
+      "neighborBonus": {
+        "source": "B06",
+        "bonus": 0.20,
+        "range": 2,
+        "cap": 1,
+        "direction": "received"
+      },
+      "neighborConflict": [
+        { "target": "B03", "penalty": -10, "type": "happiness", "range": 2 },
+        { "target": "B11", "penalty": -10, "type": "beauty",    "range": 2 }
+      ],
+      "unlockStep": "post_ftue",
+      "explanation": "The strongest earner — keep it away from homes and gardens."
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "rival.schema.json",
+  "type": "object",
+  "required": ["firstRevealOffset", "growthBand", "maxLeadOverPlayer", "names", "microcopy"],
+  "properties": {
+    "firstRevealOffset":           { "type": "integer" },
+    "growthBand":                  { "type": "object", "required": ["min","max"], "properties": { "min": {"type":"number"}, "max": {"type":"number"} } },
+    "maxLeadOverPlayer":           { "type": "integer" },
+    "betweenSessionGrowthPercent": { "type": "object", "required": ["min","max"] },
+    "comebackPercent":             { "type": "object", "required": ["min","max"] },
+    "updateEveryNActions":         { "type": "integer" },
+    "neverDecreases":              { "type": "boolean" },
+    "names":                       { "type": "array", "minItems": 12, "items": {"type":"string"} },
+    "microcopy":                   { "type": "object", "required": ["reveal","behind","close","ahead","return"] }
+  }
+}
