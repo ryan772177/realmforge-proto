@@ -29,8 +29,11 @@ const TERRAIN_NAMES = Object.fromEntries(
   Object.values(terrainJson.terrainTypes).map((t) => [t.id, t.name])
 ) as Record<TerrainId, string>;
 
-// §18.2 cause-text format: "+20% Wood from Forest ×2" — names the resource
-// the building actually produces, not just the bare percentage.
+// §18.2 cause-text format: "+60% Wood from Forest ×3" (cumulative rate×count,
+// matching §18.1's mockup and §18.2's own "Cap state" row — the table's
+// "Cause text format" row example is flat and inconsistent with both) —
+// names the resource the building actually produces, not just the bare
+// percentage.
 function primaryResourceName(config: BuildingConfig): string {
   const key = Object.keys(config.baseOutput ?? {})[0];
   return key ? key.charAt(0).toUpperCase() + key.slice(1) : "";
@@ -181,8 +184,15 @@ export function computeScore(board: BoardState): ScoreReport {
         const cappedCount = Math.min(terrain.count, terrain.cap);
         const isCapped = terrain.count >= terrain.cap;
         const resourceName = primaryResourceName(config);
+        // §18.2's "Cause text format" row example ("+20% ... ×2") is flat
+        // per-tile, but its own "Cap state" row ("+60% ... ×3 (MAX)") and
+        // §18.1's worked mockup ("+60% Wood from Forest ×3") both show the
+        // cumulative rate×count value — and only the cumulative number
+        // matches `delta` below (the value actually applied to the score).
+        // Showing the flat rate here would silently mismatch the report's
+        // own math, so cumulative wins.
         causeLines.unshift({
-          text: `+${Math.round(terrain.rate * 100)}%${resourceName ? ` ${resourceName}` : ""} from ${TERRAIN_NAMES[terrain.terrain]} ×${cappedCount}${capSuffix(isCapped)}`,
+          text: `+${Math.round(terrain.rate * cappedCount * 100)}%${resourceName ? ` ${resourceName}` : ""} from ${TERRAIN_NAMES[terrain.terrain]} ×${cappedCount}${capSuffix(isCapped)}`,
           delta: terrain.rate * cappedCount,
           isConflict: false,
           isCapped,
@@ -246,7 +256,7 @@ export function computeScore(board: BoardState): ScoreReport {
         const isCapped = terrain.count >= terrain.cap;
         const resourceName = primaryResourceName(config);
         causeLines.unshift({
-          text: `+${Math.round(terrain.rate * 100)}%${resourceName ? ` ${resourceName}` : ""} from ${TERRAIN_NAMES[terrain.terrain]} ×${cappedCount}${capSuffix(isCapped)}`,
+          text: `+${Math.round(terrain.rate * cappedCount * 100)}%${resourceName ? ` ${resourceName}` : ""} from ${TERRAIN_NAMES[terrain.terrain]} ×${cappedCount}${capSuffix(isCapped)}`,
           delta: terrain.rate * cappedCount,
           isConflict: false,
           isCapped,

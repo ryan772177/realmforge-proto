@@ -103,19 +103,22 @@ function causeLinesForTile(
 // §15: "every conflict appears in the adjacency report during preview, before
 // commit — the player is warned, never ambushed." The dragged building's own
 // breakdown entry only carries bonuses/penalties it *receives* (e.g. a Sawmill
-// synergy it's given) — a conflict it *inflicts* on a neighbor (Forge hurting
-// a nearby Cottage) lives in that neighbor's own breakdown entry instead, so
-// it's invisible while hovering the source tile. Diff the pre- and post-drag
-// reports' conflict-bearing categories (happiness/beauty) per target tile to
-// surface anything newly caused by this placement.
-function collateralConflictLines(
+// synergy it's given) — an effect it *inflicts* on a neighbor (Forge hurting a
+// nearby Cottage, or a Sawmill boosting a nearby Lumber Camp) lives in that
+// neighbor's own breakdown entry instead, so it's invisible while hovering the
+// source tile. Diff the pre- and post-drag reports per target tile, across
+// every category a synergy or conflict can land in (production/mana for
+// synergies like SYN_02/04, happiness/beauty for both), to surface anything
+// newly caused by this placement.
+function collateralLines(
   before: ScoreReport,
   after: ScoreReport,
   excludeRow: number,
-  excludeCol: number
+  excludeCol: number,
+  wantConflict: boolean
 ): CauseLine[] {
   const relevant = (r: ScoreReport) =>
-    [...r.happinessBreakdown, ...r.beautyBreakdown].filter(
+    [...r.productionBreakdown, ...r.manaBreakdown, ...r.happinessBreakdown, ...r.beautyBreakdown].filter(
       (l) => !(l.row === excludeRow && l.col === excludeCol)
     );
   const beforeByTile = new Map(relevant(before).map((l) => [`${l.row},${l.col}`, l]));
@@ -123,19 +126,44 @@ function collateralConflictLines(
   const collateral: CauseLine[] = [];
   for (const line of relevant(after)) {
     const beforeLine = beforeByTile.get(`${line.row},${line.col}`);
-    const beforeConflicts = new Map(
-      (beforeLine?.causeLines ?? []).filter((c) => c.isConflict).map((c) => [c.text, c.delta])
+    const beforeMatching = new Map(
+      (beforeLine?.causeLines ?? []).filter((c) => c.isConflict === wantConflict).map((c) => [c.text, c.delta])
     );
     for (const cause of line.causeLines) {
-      if (!cause.isConflict) continue;
-      const priorDelta = beforeConflicts.get(cause.text);
-      // New conflict, or an existing one that got worse (more sources in range).
+      if (cause.isConflict !== wantConflict) continue;
+      const priorDelta = beforeMatching.get(cause.text);
+      // New effect, or an existing one that got stronger (more sources in range).
       if (priorDelta === undefined || Math.abs(cause.delta) > Math.abs(priorDelta)) {
         collateral.push(cause);
       }
     }
   }
   return collateral;
+}
+
+function collateralConflictLines(
+  before: ScoreReport,
+  after: ScoreReport,
+  excludeRow: number,
+  excludeCol: number
+): CauseLine[] {
+  return collateralLines(before, after, excludeRow, excludeCol, true);
+}
+
+// Same idea as collateralConflictLines but for the positive case: a synergy
+// this placement grants a neighbor (e.g. dragging a Sawmill near an existing
+// Lumber Camp) only ever showed up as a bottom-line score jump with no cause
+// line explaining it, since the bonus lives in the neighbor's breakdown, not
+// the dragged tile's. Lower priority than conflicts (not a safety/trust
+// issue, just a comprehension nicety), so callers should list these after
+// both the conflict collateral and the dragged tile's own lines.
+function collateralSynergyLines(
+  before: ScoreReport,
+  after: ScoreReport,
+  excludeRow: number,
+  excludeCol: number
+): CauseLine[] {
+  return collateralLines(before, after, excludeRow, excludeCol, false);
 }
 
 function isPlayerAction(event: GameEvent): boolean {
@@ -378,13 +406,16 @@ export default function App() {
       });
     }
 
-    document.addEventListener("visibilitychange", () => {
+    function handleVisibilityChange() {
       if (document.visibilityState === "hidden") persistAndEndSession();
-    });
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("pagehide", persistAndEndSession);
 
     return () => {
       clearInterval(id);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("pagehide", persistAndEndSession);
     };
   }, []);
@@ -602,7 +633,21 @@ export default function App() {
           const { fromRow, fromCol } = drag.source;
           const current = detailTileRef.current;
           const opening = !(current && current.row === fromRow && current.col === fromCol);
-          if (opening) track("report_viewed", { context: "detail", dwell_ms: 0 });
+          if (opening) {
+            track("report_viewed", { context: "detail", dwell_ms: 0 });
+            // FTUE step 3's only other path to "bonus_dwell" is holding a
+            // live drag still over a valid tile for 1.5s — a player who
+            // places/relocates decisively and never lingers can never fire
+            // it and gets stuck at step 3 forever. Tapping a placed building
+            // to read its report is the same "read the bonus" action via a
+            // tap instead of a dwell, so it satisfies the same step.
+            const next = foldEvents(g, [{ type: "bonus_dwell" }], currentReport.prosperity);
+            trackFoldOutcome(next, currentReport.prosperity);
+            setGame(g2 => ({
+              ...g2, quests: next.quests, ftue: next.ftue, rival: next.rival,
+              resources: addGold(g2.resources, next.autoClaimedGold),
+            }));
+          }
           setDetailTile(opening ? { row: fromRow, col: fromCol } : null);
         }
       }
@@ -853,6 +898,9 @@ export default function App() {
                     dragUI.hoverRow,
                     dragUI.hoverCol
                   ),
+                  // Synergies this placement grants a neighbor, lowest
+                  // priority — see collateralSynergyLines.
+                  ...collateralSynergyLines(currentReport, previewReport, dragUI.hoverRow, dragUI.hoverCol),
                 ]
               : undefined
           }

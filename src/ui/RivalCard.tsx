@@ -45,7 +45,12 @@ export default function RivalCard({ rival, playerScore, onImproveMyScore, onView
         className={pulse ? "rf-pulse" : undefined}
         style={{
           position: "absolute",
-          top: 12,
+          // top:12 used to sit directly on top of the header row's
+          // Prosperity button (both effectively anchor to the root
+          // container's top padding) — confirmed overlapping via bounding
+          // box (Prosperity y:12-39 vs chip y:17-29). Pushed below the
+          // header row instead.
+          top: 48,
           right: 8,
           display: "flex",
           alignItems: "center",
