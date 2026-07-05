@@ -30,10 +30,22 @@ function loadTesterLogs(exportsDir) {
   if (files.length === 0) {
     throw new Error(`No .json files found in ${exportsDir}`);
   }
-  return files.map((f) => ({
-    testerId: basename(f, ".json"),
-    entries: JSON.parse(readFileSync(join(exportsDir, f), "utf-8")),
-  }));
+  return files
+    .map((f) => {
+      const parsed = JSON.parse(readFileSync(join(exportsDir, f), "utf-8"));
+      // A real tester export (src/game/analytics.ts's "Export Analytics Log")
+      // is always a flat array of {event,payload,t} entries. Automated tooling
+      // (playtest/explore-paths.mjs) writes exploration-findings.json into
+      // this same directory as an object, explicitly labeled as non-playtest
+      // data — skip anything shaped that way rather than silently mixing
+      // synthetic bug-hunt output into human playtest metrics.
+      if (!Array.isArray(parsed)) {
+        console.warn(`Skipping ${f}: not a tester export array (looks like automated tooling output, e.g. explore-paths.mjs findings) — not human playtest data.`);
+        return null;
+      }
+      return { testerId: basename(f, ".json"), entries: parsed };
+    })
+    .filter((entry) => entry !== null);
 }
 
 function loadSurvey(surveyPath) {
